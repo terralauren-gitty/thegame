@@ -5,25 +5,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Spin & Win — Monthly Challenge</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --fire:#FF4D1C;--gold:#FFB800;--sky:#38BDF8;--mint:#10F5A0;--purple:#C084FC;--pink:#F472B6;
-  --dark:#08080A;--surface:#111115;--card:#18181D;--card2:#1F1F26;
+  --dark:#08080A;--card:#18181D;--card2:#1F1F26;
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
   --muted:rgba(255,255,255,0.4);--muted2:rgba(255,255,255,0.65);
   --r:14px;--r2:20px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;}
-body{background:var(--dark);color:#fff;font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;padding-bottom:70px;}
+body{background:var(--dark);color:#fff;font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;padding-bottom:74px;}
 
-/* NAV */
-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;background:rgba(8,8,10,0.93);backdrop-filter:blur(16px);}
-.logo{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;letter-spacing:-0.5px;display:flex;align-items:center;gap:8px;}
-.logo-fire{color:var(--fire);}
-.logo-gold{color:var(--gold);}
+/* ── AUTH SCREEN ── */
+#authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(255,77,28,0.12) 0%,transparent 65%),
+             radial-gradient(ellipse 40% 30% at 85% 60%,rgba(192,132,252,0.09) 0%,transparent 60%),var(--dark);}
+.auth-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:36px;width:100%;max-width:420px;}
+.auth-logo{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;text-align:center;margin-bottom:6px;}
+.auth-logo .af{color:var(--fire);}
+.auth-logo .ag{color:var(--gold);}
+.auth-tagline{text-align:center;font-size:13px;color:var(--muted);margin-bottom:28px;}
+.auth-tabs{display:flex;background:var(--card2);border-radius:12px;padding:4px;margin-bottom:24px;}
+.auth-tab{flex:1;padding:9px;border-radius:9px;border:none;background:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;}
+.auth-tab.active{background:var(--dark);color:#fff;}
+.auth-section{display:none;}
+.auth-section.active{display:block;}
+.auth-msg{font-size:13px;padding:11px 14px;border-radius:10px;margin-bottom:14px;display:none;}
+.auth-msg.ok{background:rgba(16,245,160,0.1);border:1px solid rgba(16,245,160,0.25);color:var(--mint);}
+.auth-msg.err{background:rgba(255,77,28,0.1);border:1px solid rgba(255,77,28,0.25);color:var(--fire);}
+.auth-msg.show{display:block;}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--muted);font-size:12px;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;border-top:1px solid var(--border2);}
+.forgot-link{text-align:right;font-size:12px;color:var(--purple);cursor:pointer;margin-top:-8px;margin-bottom:14px;}
+.forgot-link:hover{text-decoration:underline;}
+.name-check{font-size:11px;margin-top:5px;display:none;}
+.name-check.ok{color:var(--mint);display:block;}
+.name-check.err{color:var(--fire);display:block;}
+
+/* ── NAV ── */
+nav{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;background:rgba(8,8,10,0.94);backdrop-filter:blur(16px);}
+.logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:-0.3px;}
+.logo .af{color:var(--fire);}
+.logo .ag{color:var(--gold);}
 .nav-pills{display:flex;gap:2px;}
-.np{background:none;border:none;color:var(--muted);padding:7px 13px;border-radius:30px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;transition:all 0.18s;white-space:nowrap;}
+.np{background:none;border:none;color:var(--muted);padding:6px 12px;border-radius:30px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;transition:all 0.18s;white-space:nowrap;}
 .np.active{background:var(--card2);color:#fff;border:1px solid var(--border2);}
 .np:hover:not(.active){color:#fff;}
 .nav-r{display:flex;align-items:center;gap:8px;}
@@ -31,60 +57,42 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:14px 2
 .conn.on{background:var(--mint);box-shadow:0 0 8px var(--mint);}
 .conn.sy{background:var(--gold);animation:blink 0.7s infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
-.who{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border2);border-radius:30px;padding:4px 11px 4px 4px;cursor:pointer;font-size:12px;}
+.user-pill{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border2);border-radius:30px;padding:4px 10px 4px 4px;font-size:12px;}
 .av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.logout-btn{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;}
+.logout-btn:hover{color:#fff;border-color:rgba(255,255,255,0.25);}
 
-/* PAGES */
+/* ── PAGES ── */
 .page{display:none;}
-.page.active{display:block;animation:fu 0.28s ease;}
+.page.active{display:block;animation:fu 0.25s ease;}
 @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.wrap{max-width:860px;margin:0 auto;padding:32px 22px;}
+.wrap{max-width:860px;margin:0 auto;padding:28px 20px;}
 
-/* HERO */
-.hero{text-align:center;padding:52px 22px 36px;position:relative;overflow:hidden;}
+/* ── HERO ── */
+.hero{text-align:center;padding:48px 20px 32px;position:relative;overflow:hidden;}
 .hero-bg{position:absolute;inset:0;z-index:0;
   background:radial-gradient(ellipse 70% 45% at 50% 0%,rgba(255,77,28,0.13) 0%,transparent 70%),
              radial-gradient(ellipse 35% 25% at 80% 55%,rgba(192,132,252,0.09) 0%,transparent 60%),
              radial-gradient(ellipse 35% 25% at 20% 55%,rgba(255,184,0,0.08) 0%,transparent 60%);}
-.hero-kicker{display:inline-block;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--fire);border:1px solid rgba(255,77,28,0.3);border-radius:30px;padding:5px 14px;margin-bottom:18px;position:relative;z-index:1;}
-.hero h1{font-family:'Syne',sans-serif;font-size:clamp(36px,6.5vw,68px);font-weight:800;line-height:1.05;letter-spacing:-2px;position:relative;z-index:1;margin-bottom:14px;}
+.hero-kicker{display:inline-block;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--fire);border:1px solid rgba(255,77,28,0.3);border-radius:30px;padding:4px 13px;margin-bottom:16px;position:relative;z-index:1;}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(34px,6vw,64px);font-weight:800;line-height:1.05;letter-spacing:-2px;position:relative;z-index:1;margin-bottom:12px;}
 .hero h1 .af{color:var(--fire);}
 .hero h1 .ag{color:var(--gold);}
-.hero-sub{font-size:15px;color:var(--muted2);max-width:500px;margin:0 auto 28px;line-height:1.7;position:relative;z-index:1;}
-.hero-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:36px;position:relative;z-index:1;}
-.hb{display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border2);border-radius:30px;padding:6px 13px;font-size:12px;font-weight:500;color:var(--muted2);}
-.month-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.25);border-radius:30px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--gold);position:relative;z-index:1;margin-bottom:28px;}
+.hero-sub{font-size:14px;color:var(--muted2);max-width:480px;margin:0 auto 22px;line-height:1.7;position:relative;z-index:1;}
+.month-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.25);border-radius:30px;padding:5px 13px;font-size:12px;font-weight:600;color:var(--gold);position:relative;z-index:1;margin-bottom:22px;}
+.hero-badges{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
+.hb{display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border2);border-radius:30px;padding:5px 12px;font-size:11px;font-weight:500;color:var(--muted2);}
 
-/* JOIN CARD */
-.join-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:28px;max-width:540px;margin:0 auto;position:relative;z-index:1;}
-.jc-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:4px;}
-.jc-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
-
-/* CHALLENGE TOGGLES */
-.ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
-.ch-opt{border:2px solid var(--border);border-radius:var(--r);padding:14px 12px;cursor:pointer;transition:all 0.2s;background:var(--card2);text-align:center;position:relative;}
-.ch-opt:hover{border-color:var(--border2);}
-.ch-opt.on-steps{border-color:var(--fire);background:rgba(255,77,28,0.07);}
-.ch-opt.on-budget{border-color:var(--purple);background:rgba(192,132,252,0.07);}
-.ch-check{position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;}
-.ch-opt.on-steps .ch-check,.ch-opt.on-budget .ch-check{border-color:transparent;background:var(--mint);color:#000;}
-.ch-icon{font-size:26px;margin-bottom:6px;}
-.ch-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:2px;}
-.ch-desc{font-size:11px;color:var(--muted);line-height:1.4;}
-
-/* INPUTS */
-input,select{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:#fff;padding:12px 14px;border-radius:12px;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border 0.2s;}
+/* ── INPUTS ── */
+input,select{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:#fff;padding:11px 14px;border-radius:11px;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border 0.2s;}
 input::placeholder{color:var(--muted);}
 input:focus{border-color:var(--fire);}
 input.pu:focus{border-color:var(--purple);}
-label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase;}
-.fr{margin-bottom:14px;}
-.b-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;}
-.chip{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:4px 11px;font-size:12px;cursor:pointer;transition:all 0.15s;color:var(--muted2);}
-.chip:hover,.chip.on{background:rgba(192,132,252,0.15);border-color:var(--purple);color:var(--purple);}
+label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500;letter-spacing:0.4px;text-transform:uppercase;}
+.fr{margin-bottom:13px;}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 24px;border-radius:40px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.18s;}
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 22px;border-radius:40px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.18s;}
 .btn-fire{background:var(--fire);color:#fff;}
 .btn-fire:hover{background:#ff6240;transform:translateY(-1px);}
 .btn-gold{background:var(--gold);color:#000;}
@@ -94,52 +102,61 @@ label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-wei
 .btn-outline{background:transparent;color:#fff;border:1px solid var(--border2);}
 .btn-outline:hover{border-color:rgba(255,255,255,0.3);}
 .btn-full{width:100%;}
-.btn-sm{padding:7px 14px;font-size:12px;}
+.btn-sm{padding:7px 13px;font-size:12px;}
 .btn:disabled{opacity:0.35;cursor:not-allowed;transform:none!important;}
 
-/* PARTICIPANT STRIP */
-.p-strip{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
-.p-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
-.p-info{flex:1;}
+/* ── CHALLENGE PICKER ── */
+.ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+.ch-opt{border:2px solid var(--border);border-radius:var(--r);padding:13px 11px;cursor:pointer;transition:all 0.2s;background:var(--card2);text-align:center;position:relative;}
+.ch-opt:hover{border-color:var(--border2);}
+.ch-opt.on-steps{border-color:var(--fire);background:rgba(255,77,28,0.07);}
+.ch-opt.on-budget{border-color:var(--purple);background:rgba(192,132,252,0.07);}
+.ch-check{position:absolute;top:7px;right:7px;width:17px;height:17px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:9px;}
+.ch-opt.on-steps .ch-check,.ch-opt.on-budget .ch-check{border-color:transparent;background:var(--mint);color:#000;}
+.ch-icon{font-size:24px;margin-bottom:5px;}
+.ch-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:2px;}
+.ch-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+
+/* ── PARTICIPANT STRIP ── */
+.p-strip{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 16px;display:flex;align-items:center;gap:11px;margin-bottom:18px;flex-wrap:wrap;}
+.p-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
 .p-name{font-weight:600;font-size:14px;}
-.p-meta{font-size:11px;color:var(--muted);margin-top:2px;}
-.p-tags{display:flex;gap:6px;flex-wrap:wrap;}
-.ptag{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 9px;font-size:10px;font-weight:600;}
-.ptag-fire{background:rgba(255,77,28,0.1);border:1px solid rgba(255,77,28,0.25);color:var(--fire);}
-.ptag-purple{background:rgba(192,132,252,0.1);border:1px solid rgba(192,132,252,0.25);color:var(--purple);}
-.ptag-gold{background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.25);color:var(--gold);}
-.ptag-mint{background:rgba(16,245,160,0.1);border:1px solid rgba(16,245,160,0.25);color:var(--mint);}
+.p-meta{font-size:11px;color:var(--muted);margin-top:1px;}
+.ptags{display:flex;gap:5px;flex-wrap:wrap;margin-left:auto;}
+.ptag{display:inline-flex;align-items:center;gap:3px;border-radius:20px;padding:3px 8px;font-size:10px;font-weight:600;}
+.ptag-f{background:rgba(255,77,28,0.1);border:1px solid rgba(255,77,28,0.25);color:var(--fire);}
+.ptag-p{background:rgba(192,132,252,0.1);border:1px solid rgba(192,132,252,0.25);color:var(--purple);}
 
-/* STATS */
-.sg{display:grid;gap:9px;margin-bottom:20px;}
-.sg-2{grid-template-columns:repeat(2,1fr);}
-.sg-3{grid-template-columns:repeat(3,1fr);}
-.sg-4{grid-template-columns:repeat(4,1fr);}
-.sbox{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:13px;text-align:center;}
-.sn{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--gold);}
-.sn.fire{color:var(--fire);}
-.sn.purple{color:var(--purple);}
-.sn.mint{color:var(--mint);}
-.sn.sky{color:var(--sky);}
-.sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;}
+/* ── STATS ── */
+.sg{display:grid;gap:8px;margin-bottom:18px;}
+.sg2{grid-template-columns:repeat(2,1fr);}
+.sg3{grid-template-columns:repeat(3,1fr);}
+.sg4{grid-template-columns:repeat(4,1fr);}
+.sbox{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center;}
+.sn{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--gold);}
+.sn.f{color:var(--fire);}
+.sn.p{color:var(--purple);}
+.sn.m{color:var(--mint);}
+.sn.s{color:var(--sky);}
+.sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-top:2px;}
 
-/* SECTION HEADER */
-.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.sh-t{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;}
+/* ── SECTION HEAD ── */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
+.sh-t{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;}
 
-/* WHEEL */
+/* ── WHEEL ── */
 .ww{position:relative;display:inline-block;}
-.wptr{position:absolute;top:-17px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:24px solid var(--gold);filter:drop-shadow(0 4px 10px rgba(255,184,0,0.6));z-index:10;}
+.wptr{position:absolute;top:-16px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:23px solid var(--gold);filter:drop-shadow(0 4px 10px rgba(255,184,0,0.6));z-index:10;}
 .wptr.pu{border-top-color:var(--purple);filter:drop-shadow(0 4px 10px rgba(192,132,252,0.6));}
-.wsec{display:flex;flex-direction:column;align-items:center;gap:22px;padding:6px 0;}
-.wrev{text-align:center;background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:20px 32px;min-width:210px;}
-.wamt{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:var(--gold);letter-spacing:-2px;line-height:1;}
+.wsec{display:flex;flex-direction:column;align-items:center;gap:20px;padding:6px 0;}
+.wrev{text-align:center;background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:18px 30px;min-width:200px;}
+.wamt{font-family:'Syne',sans-serif;font-size:50px;font-weight:800;color:var(--gold);letter-spacing:-2px;line-height:1;}
 .wamt.pu{color:var(--purple);}
 .wlbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
 .wsub{font-size:11px;color:var(--muted);margin-top:4px;}
 
-/* BANNERS */
-.bnr{display:flex;align-items:center;gap:11px;border-radius:var(--r);padding:13px 15px;font-size:13px;margin-bottom:16px;}
+/* ── BANNERS ── */
+.bnr{display:flex;align-items:center;gap:10px;border-radius:var(--r);padding:12px 14px;font-size:13px;margin-bottom:14px;}
 .bnr-info{background:rgba(56,189,248,0.07);border:1px solid rgba(56,189,248,0.18);}
 .bnr-ok{background:rgba(16,245,160,0.07);border:1px solid rgba(16,245,160,0.2);}
 .bnr-warn{background:rgba(255,184,0,0.07);border:1px solid rgba(255,184,0,0.2);}
@@ -148,253 +165,258 @@ label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-wei
 .bnr .bi{font-size:18px;flex-shrink:0;}
 .bnr strong{color:#fff;}
 
-/* CALENDAR */
-.cal-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+/* ── CALENDAR ── */
+.cal-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;}
 .cal-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px;}
 .cal-hdr span{text-align:center;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
 .cc{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border);background:var(--card2);cursor:pointer;transition:all 0.13s;gap:1px;}
-.cc .cn{font-size:12px;font-weight:600;}
-.cc .cv{font-size:9px;color:var(--muted);}
+.cc .cn{font-size:11px;font-weight:600;}
+.cc .cv{font-size:8px;color:var(--muted);}
 .cc.hit{border-color:var(--mint);background:rgba(16,245,160,0.07);}
 .cc.hit .cn{color:var(--mint);}
 .cc.hit .cv{color:rgba(16,245,160,0.6);}
-.cc.miss{border-color:rgba(255,77,28,0.28);background:rgba(255,77,28,0.04);}
+.cc.miss{border-color:rgba(255,77,28,0.28);}
 .cc.miss .cn{color:rgba(255,77,28,0.55);}
-.cc.over{border-color:rgba(255,77,28,0.28);background:rgba(255,77,28,0.04);}
+.cc.over{border-color:rgba(255,77,28,0.28);}
 .cc.over .cn{color:rgba(255,77,28,0.55);}
 .cc.pend{border-color:rgba(255,184,0,0.28);}
 .cc.pend .cn{color:var(--gold);}
 .cc.tod{border-color:var(--gold);box-shadow:0 0 10px rgba(255,184,0,0.15);}
 .cc.fut{opacity:0.2;cursor:default;pointer-events:none;}
-.cc.outmon{opacity:0.12;cursor:default;pointer-events:none;}
-.cc:hover:not(.fut):not(.outmon){border-color:var(--border2);transform:scale(1.06);}
+.cc.out{opacity:0.1;cursor:default;pointer-events:none;}
+.cc:hover:not(.fut):not(.out){border-color:var(--border2);transform:scale(1.06);}
 .cal-leg{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:10px;}
 
-/* LEADERBOARD */
-.lb-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
-.lbt{padding:7px 16px;border-radius:30px;border:1px solid var(--border2);background:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;}
+/* ── LEADERBOARD ── */
+.lb-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.lbt{padding:6px 14px;border-radius:30px;border:1px solid var(--border2);background:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;}
 .lbt.as{background:rgba(255,77,28,0.1);border-color:rgba(255,77,28,0.35);color:var(--fire);}
 .lbt.ab{background:rgba(192,132,252,0.1);border-color:rgba(192,132,252,0.35);color:var(--purple);}
 .lbt.at{background:rgba(255,184,0,0.1);border-color:rgba(255,184,0,0.35);color:var(--gold);}
-.lb-row{display:grid;grid-template-columns:34px 1fr 90px 65px;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid var(--border);}
+.lb-row{display:grid;grid-template-columns:32px 1fr 88px 62px;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);}
 .lb-row:last-child{border-bottom:none;}
-.lbr{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;text-align:center;}
+.lbr{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;text-align:center;}
 .lbr.r1{color:var(--gold);}
 .lbr.r2{color:#C0C0C0;}
 .lbr.r3{color:#CD7F32;}
 .lbs{text-align:right;font-weight:700;font-size:13px;}
 .lbm{text-align:right;font-size:10px;color:var(--muted);}
-.pbar{height:4px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;margin-top:4px;}
+.pbar{height:3px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;margin-top:4px;}
 .pfill{height:100%;border-radius:3px;transition:width 0.5s ease;}
 
-/* ENVELOPE */
-.env-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px;margin:10px 0;}
-.env-box{background:var(--card2);border:1px solid rgba(192,132,252,0.2);border-radius:9px;padding:9px 5px;text-align:center;}
-.env-amt{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--purple);}
-.env-cnt{font-size:10px;color:var(--muted);margin-top:1px;}
+/* ── ENVELOPE ── */
+.env-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;margin:10px 0;}
+.env-box{background:var(--card2);border:1px solid rgba(192,132,252,0.2);border-radius:9px;padding:8px 5px;text-align:center;}
+.env-amt{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--purple);}
+.env-cnt{font-size:9px;color:var(--muted);margin-top:1px;}
 
-/* MODALS */
+/* ── CHIP ── */
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+.chip{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:4px 10px;font-size:12px;cursor:pointer;transition:all 0.15s;color:var(--muted2);}
+.chip:hover,.chip.on{background:rgba(192,132,252,0.15);border-color:var(--purple);color:var(--purple);}
+
+/* ── MODAL ── */
 .mo{position:fixed;inset:0;background:rgba(0,0,0,0.76);display:none;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(6px);}
 .mo.open{display:flex;}
-.mb{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:28px;width:390px;max-width:92vw;}
-.mt{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:3px;}
+.mb{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:26px;width:380px;max-width:92vw;}
+.mt{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:3px;}
 .mc{float:right;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;}
 
-/* TOAST */
-.toast{position:fixed;bottom:80px;right:22px;z-index:999;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:12px 16px;font-size:13px;transform:translateY(80px);opacity:0;transition:all 0.3s;pointer-events:none;max-width:280px;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:80px;right:20px;z-index:999;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:12px 16px;font-size:13px;transform:translateY(80px);opacity:0;transition:all 0.3s;pointer-events:none;max-width:280px;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.ok{border-left:3px solid var(--mint);}
 .toast.err{border-left:3px solid var(--fire);}
 
-/* EMPTY */
-.empty{text-align:center;padding:44px 20px;color:var(--muted);}
-.empty .ei{font-size:40px;margin-bottom:10px;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty .ei{font-size:38px;margin-bottom:10px;}
+.divider{border:none;border-top:1px solid var(--border);margin:22px 0;}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:14px;}
+.sc-pu{background:var(--card);border:1px solid rgba(192,132,252,0.18);border-radius:var(--r2);padding:20px;margin-bottom:14px;}
 
-/* DB ERROR */
-.dberr{background:rgba(255,77,28,0.07);border:1px solid rgba(255,77,28,0.2);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;font-size:12px;line-height:1.8;}
-.dberr code{background:rgba(255,255,255,0.08);padding:2px 5px;border-radius:4px;font-size:10px;}
-
-.divider{border:none;border-top:1px solid var(--border);margin:24px 0;}
-.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:22px;margin-bottom:16px;}
-.section-card-pu{background:var(--card);border:1px solid rgba(192,132,252,0.18);border-radius:var(--r2);padding:22px;margin-bottom:16px;}
-
-/* MOBILE BOTTOM NAV */
+/* ── MOBILE NAV ── */
 .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(8,8,10,0.97);border-top:1px solid var(--border);padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:300;}
-.mob-nav .mn-wrap{display:flex;justify-content:space-around;}
-.mn-btn{background:none;border:none;color:var(--muted);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:0 10px;font-family:'Inter',sans-serif;}
-.mn-btn .mi{font-size:18px;}
-.mn-btn.active{color:#fff;}
+.mn-wrap{display:flex;justify-content:space-around;}
+.mnb{background:none;border:none;color:var(--muted);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:0 10px;font-family:'Inter',sans-serif;}
+.mnb .mi{font-size:18px;}
+.mnb.active{color:#fff;}
 
-/* EXISTING USERS LIST */
-.eu-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;background:var(--card2);border:1px solid var(--border);margin-bottom:6px;transition:border 0.15s;}
-.eu-item:hover{border-color:var(--border2);}
-
-/* MONTH END BANNER */
-.month-end{background:linear-gradient(135deg,rgba(255,184,0,0.12),rgba(255,77,28,0.08));border:1px solid rgba(255,184,0,0.3);border-radius:var(--r2);padding:20px;text-align:center;margin-bottom:20px;}
+/* ── CONFIRM EMAIL NOTICE ── */
+.confirm-notice{background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;font-size:13px;line-height:1.6;}
 
 @media(max-width:600px){
-  nav{padding:10px 12px;}
   .nav-pills{display:none;}
-  .wrap{padding:18px 12px;}
-  .sg-3,.sg-4{grid-template-columns:1fr 1fr;}
-  .lb-row{grid-template-columns:28px 1fr 75px;}
+  .wrap{padding:16px 12px;}
+  .sg3,.sg4{grid-template-columns:1fr 1fr;}
+  .lb-row{grid-template-columns:26px 1fr 72px;}
   .lbm{display:none;}
-  .ch-grid{grid-template-columns:1fr 1fr;}
   .mob-nav{display:block;}
+  .hero{padding:36px 16px 24px;}
 }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
+<!-- ═══════════ AUTH SCREEN ═══════════ -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo"><span class="af">SPIN</span> <span style="color:var(--border2);">&</span> <span class="ag">WIN</span></div>
+    <div class="auth-tagline">Monthly Step &amp; Budget Challenge 🎡</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Log In</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+      <button class="auth-tab" onclick="switchAuthTab('reset')">Reset Password</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="auth-section active" id="authLogin">
+      <div class="auth-msg" id="loginMsg"></div>
+      <div class="fr"><label>Email</label><input type="email" id="loginEmail" placeholder="your@email.com"></div>
+      <div class="fr"><label>Password</label><input type="password" id="loginPass" placeholder="Your password"></div>
+      <div class="forgot-link" onclick="switchAuthTab('reset')">Forgot password?</div>
+      <button class="btn btn-fire btn-full" onclick="doLogin()">Log In →</button>
+      <div class="auth-divider">or</div>
+      <div style="text-align:center;font-size:13px;color:var(--muted);">New here? <span style="color:var(--fire);cursor:pointer;" onclick="switchAuthTab('signup')">Create an account</span></div>
+    </div>
+
+    <!-- SIGNUP -->
+    <div class="auth-section" id="authSignup">
+      <div class="auth-msg" id="signupMsg"></div>
+      <div class="fr">
+        <label>Display Name <span style="color:var(--muted);font-size:10px;text-transform:none;">(shown on leaderboard)</span></label>
+        <input type="text" id="signupName" placeholder="e.g. Lauren, Craig M…" maxlength="30" oninput="checkNameAvail()">
+        <div class="name-check" id="nameCheck"></div>
+      </div>
+      <div class="fr"><label>Email</label><input type="email" id="signupEmail" placeholder="your@email.com"></div>
+      <div class="fr"><label>Password <span style="color:var(--muted);font-size:10px;text-transform:none;">(min 6 characters)</span></label><input type="password" id="signupPass" placeholder="Choose a password"></div>
+
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;font-weight:500;">Choose Your Challenge(s)</div>
+      <div class="ch-grid">
+        <div class="ch-opt on-steps" id="suOptS" onclick="toggleSignupCh('steps')">
+          <div class="ch-check" id="suChkS">✓</div>
+          <div class="ch-icon">👟</div>
+          <div class="ch-title">Steps</div>
+          <div class="ch-desc">Daily step goal from the wheel</div>
+        </div>
+        <div class="ch-opt" id="suOptB" onclick="toggleSignupCh('budget')">
+          <div class="ch-check" id="suChkB">✓</div>
+          <div class="ch-icon">💰</div>
+          <div class="ch-title">Budget</div>
+          <div class="ch-desc">Daily food spending limit</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-style:italic;margin-bottom:14px;">💡 You can do both!</div>
+      <button class="btn btn-fire btn-full" onclick="doSignup()">Create Account 🚀</button>
+      <div class="auth-divider">or</div>
+      <div style="text-align:center;font-size:13px;color:var(--muted);">Already joined? <span style="color:var(--fire);cursor:pointer;" onclick="switchAuthTab('login')">Log in</span></div>
+    </div>
+
+    <!-- RESET PASSWORD -->
+    <div class="auth-section" id="authReset">
+      <div class="auth-msg" id="resetMsg"></div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Enter your email and we'll send you a link to reset your password.</p>
+      <div class="fr"><label>Email</label><input type="email" id="resetEmail" placeholder="your@email.com"></div>
+      <button class="btn btn-fire btn-full" onclick="doReset()">Send Reset Link</button>
+      <div class="auth-divider">or</div>
+      <div style="text-align:center;font-size:13px;color:var(--muted);">Remembered it? <span style="color:var(--fire);cursor:pointer;" onclick="switchAuthTab('login')">Log in</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div id="appScreen" style="display:none;">
+
 <nav>
-  <div class="logo"><span class="logo-fire">SPIN</span><span style="color:var(--border2);margin:0 3px;">&</span><span class="logo-gold">WIN</span></div>
+  <div class="logo"><span class="af">SPIN</span> <span style="color:var(--border2);font-size:14px;">&</span> <span class="ag">WIN</span></div>
   <div class="nav-pills">
     <button class="np active" onclick="showPage('home')">🏠 Home</button>
     <button class="np" onclick="showPage('steps')">👟 Steps</button>
     <button class="np" onclick="showPage('budget')">💰 Budget</button>
-    <button class="np" onclick="showPage('leaderboard')">🏆 Leaderboard</button>
+    <button class="np" onclick="showPage('leaderboard')">🏆 Board</button>
   </div>
   <div class="nav-r">
     <div class="conn" id="conn"></div>
-    <div class="who" id="whoPill" style="display:none;" onclick="showPage('home')">
-      <div class="av" id="navAv"></div>
-      <span id="navNm"></span>
-    </div>
+    <div class="user-pill" id="userPill"></div>
+    <button class="logout-btn" onclick="doLogout()">Log out</button>
   </div>
 </nav>
 
-<!-- ═══════════ HOME ═══════════ -->
+<!-- HOME -->
 <div class="page active" id="page-home">
   <div class="hero">
     <div class="hero-bg"></div>
     <div class="hero-kicker">🎉 Monthly Group Challenge</div>
     <h1>Move More.<br><span class="af">Spend Smart.</span><br><span class="ag">Win Together.</span></h1>
-    <p class="hero-sub">Spin a wheel every day for a surprise challenge. Hit your step goal, stick to your food budget — or do both. Compete live on the leaderboard.</p>
-    <div class="month-badge" id="currentMonthBadge">📅 Loading…</div>
+    <p class="hero-sub">Spin a wheel every day for your challenge. Hit your step goal, stick to your food budget — or do both. Compete live on the leaderboard.</p>
+    <div class="month-badge" id="monthBadge">📅 Loading…</div>
     <div class="hero-badges">
-      <div class="hb">🎡 Daily Spin Wheel</div>
+      <div class="hb">🎡 Daily Spin</div>
       <div class="hb">📊 Live Leaderboard</div>
-      <div class="hb">🔥 Streak Tracking</div>
       <div class="hb">⚡ Join Anytime</div>
-      <div class="hb">💾 Synced Everywhere</div>
+      <div class="hb">🔐 Secure Login</div>
     </div>
   </div>
-
   <div class="wrap" style="padding-top:0;">
-    <div id="dbErr" style="display:none;" class="dberr">
-      ⚠️ <strong>Database tables missing.</strong> Run this SQL in Supabase SQL Editor then refresh:<br><br>
-      <code>CREATE TABLE IF NOT EXISTS participants(id bigserial primary key,name text unique not null,do_steps boolean default true,do_budget boolean default false,budget numeric,created_at timestamptz default now());</code><br>
-      <code>CREATE TABLE IF NOT EXISTS spins(id bigserial primary key,name text not null,date date not null,goal int not null,unique(name,date));</code><br>
-      <code>CREATE TABLE IF NOT EXISTS logs(id bigserial primary key,name text not null,date date not null,steps int not null,unique(name,date));</code><br>
-      <code>CREATE TABLE IF NOT EXISTS budget_months(id bigserial primary key,name text not null,month text not null,total numeric not null,days int not null,envelopes jsonb not null,unique(name,month));</code><br>
-      <code>CREATE TABLE IF NOT EXISTS budget_spins(id bigserial primary key,name text not null,month text not null,date date not null,allowance numeric not null,unique(name,date));</code><br>
-      <code>CREATE TABLE IF NOT EXISTS budget_logs(id bigserial primary key,name text not null,date date not null,spent numeric not null,unique(name,date));</code><br>
-      <code>CREATE TABLE IF NOT EXISTS month_archives(id bigserial primary key,name text not null,month text not null,challenge text not null,score numeric not null,metric text not null,created_at timestamptz default now(),unique(name,month,challenge));</code>
-    </div>
-
-    <!-- Active user panel -->
-    <div id="joinedPanel" style="display:none;">
-      <div id="homeStrip"></div>
-      <div id="homeStats"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;" id="homeActions"></div>
-    </div>
-
-    <!-- Join card -->
-    <div class="join-card" id="joinCard">
-      <div class="jc-title">Join the Challenge! 🚀</div>
-      <div class="jc-sub">Pick your name and choose one or both challenges to get started.</div>
-
-      <div class="fr">
-        <label>Your Name</label>
-        <input type="text" id="joinName" placeholder="e.g. Lauren, Craig, Kitty…" maxlength="30">
-      </div>
-
-      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:9px;font-weight:500;">Choose Your Challenge(s)</div>
-      <div class="ch-grid">
-        <div class="ch-opt" id="optS" onclick="toggleChallenge('steps')">
-          <div class="ch-check" id="chkS">✓</div>
-          <div class="ch-icon">👟</div>
-          <div class="ch-title">Step Challenge</div>
-          <div class="ch-desc">Spin for a daily step goal. Hit it before midnight!</div>
-        </div>
-        <div class="ch-opt" id="optB" onclick="toggleChallenge('budget')">
-          <div class="ch-check" id="chkB">✓</div>
-          <div class="ch-icon">💰</div>
-          <div class="ch-title">Food Budget</div>
-          <div class="ch-desc">Set a monthly food budget. Spin each day for your daily limit!</div>
-        </div>
-      </div>
-      <div style="font-size:11px;color:var(--muted);font-style:italic;margin-bottom:16px;">💡 You can do both at the same time!</div>
-
-      <button class="btn btn-fire btn-full" onclick="joinChallenge()">🚀 Let's Go!</button>
-
-      <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:9px;">Already joined? Switch to your profile:</div>
-        <div id="existingList"></div>
-      </div>
+    <div id="homeStrip"></div>
+    <div id="homeStats"></div>
+    <div id="homeActions" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;"></div>
+    <div style="border-top:1px solid var(--border);padding-top:18px;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.4px;font-weight:500;">Other Challengers This Month</div>
+      <div id="othersList"></div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════ STEPS ═══════════ -->
+<!-- STEPS -->
 <div class="page" id="page-steps">
   <div class="wrap">
-    <div id="noSteps" class="empty"><div class="ei">👟</div><p>Join the Step Challenge on the Home tab first.</p></div>
+    <div id="noSteps" class="empty"><div class="ei">👟</div><p>You're not enrolled in the Step Challenge.<br><span style="font-size:12px;">Contact Lauren to get added!</span></p></div>
     <div id="stepsContent" style="display:none;">
       <div id="stepsStrip"></div>
-      <div class="sg sg-3" id="stepsStats"></div>
-
+      <div class="sg sg3" id="stepsStats"></div>
       <div class="sh"><div class="sh-t">🔥 Today's Spin</div></div>
       <div id="stepsBanner"></div>
       <div class="wsec">
-        <div class="ww"><div class="wptr"></div><canvas id="stepCanvas" width="300" height="300"></canvas></div>
+        <div class="ww"><div class="wptr"></div><canvas id="stepCanvas" width="290" height="290"></canvas></div>
         <button class="btn btn-gold" id="stepSpinBtn" onclick="doStepSpin()" style="display:none;">🎡 Spin the Wheel!</button>
         <div class="wrev" id="stepReveal" style="display:none;">
           <div class="wlbl">Your Goal Today</div>
           <div class="wamt" id="stepRevAmt">—</div>
           <div class="wsub">steps by midnight 🌙</div>
-          <div style="margin-top:12px;"><button class="btn btn-fire btn-sm" onclick="openStepLog(today())">✏️ Log My Steps</button></div>
+          <div style="margin-top:11px;"><button class="btn btn-fire btn-sm" onclick="openStepLog(todayKey())">✏️ Log Steps</button></div>
         </div>
       </div>
-
       <div class="divider"></div>
-      <div class="sh"><div class="sh-t">📅 <span id="stepCalTitle">This Month</span></div><button class="btn btn-outline btn-sm" onclick="refreshSteps()">↻</button></div>
+      <div class="sh"><div class="sh-t">📅 <span id="stepCalLbl"></span></div><button class="btn btn-outline btn-sm" onclick="refreshSteps()">↻</button></div>
       <div class="cal-wrap">
         <div class="cal-hdr"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
         <div class="cal-grid" id="stepCal"></div>
       </div>
-      <div class="cal-leg">
-        <span><span style="color:var(--mint);">■</span> Hit goal</span>
-        <span><span style="color:rgba(255,77,28,0.5);">■</span> Missed</span>
-        <span><span style="color:rgba(255,184,0,0.6);">■</span> Spun, not logged</span>
-        <span><span style="color:var(--gold);">■</span> Today</span>
-      </div>
+      <div class="cal-leg"><span><span style="color:var(--mint);">■</span> Hit</span><span><span style="color:rgba(255,77,28,0.5);">■</span> Missed</span><span><span style="color:rgba(255,184,0,0.6);">■</span> Not logged</span><span><span style="color:var(--gold);">■</span> Today</span></div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════ BUDGET ═══════════ -->
+<!-- BUDGET -->
 <div class="page" id="page-budget">
   <div class="wrap">
-    <div id="noBudget" class="empty"><div class="ei">💰</div><p>Join the Budget Challenge on the Home tab first.</p></div>
+    <div id="noBudget" class="empty"><div class="ei">💰</div><p>You're not enrolled in the Budget Challenge.<br><span style="font-size:12px;">Contact Lauren to get added!</span></p></div>
     <div id="budgetContent" style="display:none;">
       <div id="budgetStrip"></div>
-
-      <!-- Setup -->
       <div id="budgetSetup" style="display:none;">
-        <div class="bnr bnr-pu"><div class="bi">💰</div><div>Set up your <strong id="budgetMonthLbl">this month</strong> food budget to start spinning!</div></div>
-        <div class="section-card-pu">
-          <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--purple);margin-bottom:3px;">Configure <span id="setupMonthLbl2">This Month</span></div>
-          <div id="prorateNote" style="font-size:12px;color:var(--gold);margin-bottom:14px;"></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div class="bnr bnr-pu"><div class="bi">💰</div><div>Set up your food budget for <strong id="budgetMonthLbl"></strong>!</div></div>
+        <div class="sc-pu">
+          <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--purple);margin-bottom:3px;">Configure <span id="setupMonthLbl"></span></div>
+          <div id="prorateNote" style="font-size:12px;color:var(--gold);margin-bottom:12px;"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
             <div class="fr" style="margin:0;"><label>Full Monthly Budget ($)</label><input type="number" id="setupTotal" placeholder="200" min="1" class="pu" oninput="clearPrev()"></div>
-            <div class="fr" style="margin:0;"><label>Days This Month</label><input type="number" id="setupDays" placeholder="30" min="1" max="31" class="pu" oninput="clearPrev()" readonly></div>
+            <div class="fr" style="margin:0;"><label>Remaining Days</label><input type="number" id="setupDays" min="1" max="31" class="pu" readonly></div>
           </div>
           <div class="fr">
-            <label>Your Monthly Budget (suggested)</label>
-            <div class="b-chips">
+            <label>Suggested Amounts</label>
+            <div class="chips">
               <div class="chip" onclick="setChip(150)">$150</div>
               <div class="chip on" onclick="setChip(200)">$200 ✨</div>
               <div class="chip" onclick="setChip(300)">$300</div>
@@ -402,73 +424,69 @@ label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-wei
               <div class="chip" onclick="setChip(500)">$500</div>
             </div>
           </div>
-          <button class="btn btn-purple btn-sm" onclick="previewEnv()">✨ Preview My Envelopes</button>
-          <div id="envPrev" style="display:none;margin-top:14px;">
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;">Your daily envelope amounts:</div>
+          <button class="btn btn-purple btn-sm" onclick="previewEnv()">✨ Preview Envelopes</button>
+          <div id="envPrev" style="display:none;margin-top:13px;">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Your daily envelopes:</div>
             <div class="env-grid" id="envGrid"></div>
-            <div style="font-size:12px;color:var(--mint);margin:7px 0 12px;" id="envTot"></div>
+            <div style="font-size:12px;color:var(--mint);margin:7px 0 11px;" id="envTot"></div>
             <button class="btn btn-purple" onclick="saveBudgetSetup()">💾 Save &amp; Start Spinning!</button>
           </div>
         </div>
       </div>
-
-      <!-- Active -->
       <div id="budgetActive" style="display:none;">
-        <div class="sg sg-4" id="budgetStats"></div>
+        <div class="sg sg4" id="budgetStats"></div>
         <div class="sh"><div class="sh-t">💰 Today's Spin</div></div>
         <div id="budgetBanner"></div>
         <div class="wsec">
-          <div class="ww"><div class="wptr pu"></div><canvas id="budgetCanvas" width="300" height="300"></canvas></div>
-          <button class="btn btn-purple" id="budgetSpinBtn" onclick="doBudgetSpin()" style="display:none;">🎡 Spin for Today's Budget!</button>
+          <div class="ww"><div class="wptr pu"></div><canvas id="budgetCanvas" width="290" height="290"></canvas></div>
+          <button class="btn btn-purple" id="budgetSpinBtn" onclick="doBudgetSpin()" style="display:none;">🎡 Spin for Budget!</button>
           <div class="wrev" id="budgetReveal" style="display:none;">
             <div class="wlbl">Today's Allowance</div>
             <div class="wamt pu" id="budgetRevAmt">—</div>
             <div class="wsub">to spend on food today 🍽️</div>
-            <div style="margin-top:12px;"><button class="btn btn-purple btn-sm" onclick="openBudgetLog(today())">✏️ Log My Spending</button></div>
+            <div style="margin-top:11px;"><button class="btn btn-purple btn-sm" onclick="openBudgetLog(todayKey())">✏️ Log Spending</button></div>
           </div>
         </div>
         <div class="divider"></div>
-        <div class="sh"><div class="sh-t">📅 <span id="budgetCalTitle">This Month</span></div><button class="btn btn-outline btn-sm" onclick="refreshBudget()">↻</button></div>
+        <div class="sh"><div class="sh-t">📅 <span id="budgetCalLbl"></span></div><button class="btn btn-outline btn-sm" onclick="refreshBudget()">↻</button></div>
         <div class="cal-wrap">
           <div class="cal-hdr"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
           <div class="cal-grid" id="budgetCal"></div>
         </div>
-        <div class="cal-leg">
-          <span><span style="color:var(--mint);">■</span> Under budget</span>
-          <span><span style="color:rgba(255,77,28,0.5);">■</span> Over budget</span>
-          <span><span style="color:rgba(255,184,0,0.6);">■</span> Not logged yet</span>
-        </div>
-        <div style="margin-top:18px;"><button class="btn btn-outline btn-sm" onclick="resetBudget()">↺ Reset &amp; New Month</button></div>
+        <div class="cal-leg"><span><span style="color:var(--mint);">■</span> Under</span><span><span style="color:rgba(255,77,28,0.5);">■</span> Over</span><span><span style="color:rgba(255,184,0,0.6);">■</span> Not logged</span></div>
+        <div style="margin-top:16px;"><button class="btn btn-outline btn-sm" onclick="resetBudget()">↺ Reset Month</button></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════ LEADERBOARD ═══════════ -->
+<!-- LEADERBOARD -->
 <div class="page" id="page-leaderboard">
   <div class="wrap">
-    <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:4px;">🏆 Leaderboard</div>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">Live rankings for <span id="lbMonthLabel" style="color:#fff;font-weight:600;"></span> — and all-time history.</p>
+    <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:3px;">🏆 Leaderboard</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:18px;">Live rankings for <span id="lbMonthLbl" style="color:#fff;font-weight:600;"></span></p>
     <div class="lb-tabs">
-      <button class="lbt as" id="lbtSM" onclick="setLb('steps','month')">👟 Steps — This Month</button>
-      <button class="lbt" id="lbtBM" onclick="setLb('budget','month')">💰 Budget — This Month</button>
+      <button class="lbt as" id="lbtSM" onclick="setLb('steps','month')">👟 Steps — Month</button>
+      <button class="lbt" id="lbtBM" onclick="setLb('budget','month')">💰 Budget — Month</button>
       <button class="lbt" id="lbtSA" onclick="setLb('steps','alltime')">📈 Steps — All Time</button>
       <button class="lbt" id="lbtBA" onclick="setLb('budget','alltime')">📈 Budget — All Time</button>
     </div>
-    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
       <button class="btn btn-outline btn-sm" onclick="refreshLeaderboard()">↻ Refresh</button>
     </div>
     <div class="cal-wrap" id="lbContent"><div class="empty"><div class="ei">⏳</div><p>Loading…</p></div></div>
-    <div style="margin-top:14px;font-size:11px;color:var(--muted);" id="lbNote"></div>
+    <div style="margin-top:12px;font-size:11px;color:var(--muted);" id="lbNote"></div>
   </div>
 </div>
+
+</div><!-- /appScreen -->
 
 <!-- STEP LOG MODAL -->
 <div class="mo" id="stepModal">
   <div class="mb">
     <button class="mc" onclick="closeStepModal()">✕</button>
     <div class="mt">Log Steps 👟</div>
-    <p style="color:var(--muted);font-size:12px;margin-bottom:18px;" id="stepModalSub"></p>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px;" id="stepModalSub"></p>
     <div class="fr"><label>Steps Completed</label><input type="number" id="stepInput" placeholder="e.g. 8500" min="0" max="99999"></div>
     <div style="display:flex;gap:8px;"><button class="btn btn-fire" style="flex:1;" onclick="saveStepLog()">Save</button><button class="btn btn-outline" onclick="closeStepModal()">Cancel</button></div>
   </div>
@@ -479,115 +497,65 @@ label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-wei
   <div class="mb">
     <button class="mc" onclick="closeBudgetModal()">✕</button>
     <div class="mt" style="color:var(--purple);">Log Spending 💰</div>
-    <p style="color:var(--muted);font-size:12px;margin-bottom:18px;" id="budgetModalSub"></p>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px;" id="budgetModalSub"></p>
     <div class="fr"><label>Amount Spent ($)</label><input type="number" id="spentInput" placeholder="e.g. 14.50" min="0" step="0.01"></div>
     <div style="display:flex;gap:8px;"><button class="btn btn-purple" style="flex:1;" onclick="saveBudgetLog()">Save</button><button class="btn btn-outline" onclick="closeBudgetModal()">Cancel</button></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
-
-<!-- MOBILE NAV -->
 <div class="mob-nav" id="mobNav">
   <div class="mn-wrap">
-    <button class="mn-btn active" onclick="showPage('home')"><span class="mi">🏠</span>Home</button>
-    <button class="mn-btn" onclick="showPage('steps')"><span class="mi">👟</span>Steps</button>
-    <button class="mn-btn" onclick="showPage('budget')"><span class="mi">💰</span>Budget</button>
-    <button class="mn-btn" onclick="showPage('leaderboard')"><span class="mi">🏆</span>Board</button>
+    <button class="mnb active" onclick="showPage('home')"><span class="mi">🏠</span>Home</button>
+    <button class="mnb" onclick="showPage('steps')"><span class="mi">👟</span>Steps</button>
+    <button class="mnb" onclick="showPage('budget')"><span class="mi">💰</span>Budget</button>
+    <button class="mnb" onclick="showPage('leaderboard')"><span class="mi">🏆</span>Board</button>
   </div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════
-// CONFIG
+// SUPABASE CLIENT (with Auth)
 // ═══════════════════════════════════════════
-const SB='https://cowmimtttpeyrsidbkmb.supabase.co';
-const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvd21pbXR0dHBleXJzaWRia21iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MTAxNzEsImV4cCI6MjA5MDM4NjE3MX0.sI_KE_NombV97_U9MJB21D1GUL6jboopjHj7mLLaT3g';
+const { createClient } = supabase;
+const sb = createClient(
+  'https://cowmimtttpeyrsidbkmb.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvd21pbXR0dHBleXJzaWRia21iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MTAxNzEsImV4cCI6MjA5MDM4NjE3MX0.sI_KE_NombV97_U9MJB21D1GUL6jboopjHj7mLLaT3g'
+);
 
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let currentUser = null; // Supabase auth user
+let myProfile = null;   // participants row
 const SVALS=[2000,3000,4000,5000,6000,7000,8000,9000,10000,12000,15000,20000];
 const SCLR=['#FF4D1C','#FF8C1A','#FFB800','#00C9FF','#00E5A0','#A855F7','#FF4D1C','#FF8C1A','#FFB800','#00C9FF','#00E5A0','#A855F7'];
 const BCLR=['#C084FC','#A855F7','#9333EA','#7C3AED','#D8B4FE','#E879F9','#C084FC','#A855F7','#9333EA','#7C3AED','#D8B4FE','#E879F9','#C084FC','#A855F7','#9333EA','#7C3AED','#D8B4FE','#E879F9','#C084FC','#A855F7','#9333EA','#7C3AED','#D8B4FE','#E879F9','#C084FC','#A855F7','#9333EA','#7C3AED','#D8B4FE','#E879F9','#C084FC'];
-
-let me=JSON.parse(localStorage.getItem('sw30_me')||'null');
-let joinSel={steps:true,budget:false};
 let stepAngle=0,budgetAngle=0,stepSpin=false,budgetSpin=false;
 let pendingEnv=null,activeBudget=null;
 let stepLogDay=null,budgetLogDay=null,budgetLogAllow=null;
 let lbChallenge='steps',lbTime='month';
+let signupSel={steps:true,budget:false};
+let nameCheckTimer=null;
 
 // ═══════════════════════════════════════════
 // DATE HELPERS
 // ═══════════════════════════════════════════
-const today=()=>new Date().toISOString().split('T')[0];
+const todayKey=()=>new Date().toISOString().split('T')[0];
 const monthKey=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;};
 const monthLabel=()=>new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
 const daysInMonth=()=>new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
-const daysRemainingInMonth=()=>{
-  const n=new Date();
-  const last=new Date(n.getFullYear(),n.getMonth()+1,0);
-  return last.getDate()-n.getDate()+1; // include today
-};
-const monthStart=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;};
-const dayStr=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+const daysRemaining=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth()+1,0).getDate()-n.getDate()+1;};
 const fmt$=n=>'$'+Number(n).toFixed(2);
 const fmtK=n=>n>=1000?(n/1000).toFixed(1)+'k':String(n);
+const dayStr=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 
 // Avatar
-const AVCLR=['#FF4D1C','#38BDF8','#10F5A0','#FFB800','#C084FC','#F472B6','#FB923C'];
-const avClr=n=>{let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))%AVCLR.length;return AVCLR[h];};
-const initials=n=>n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+const AVC=['#FF4D1C','#38BDF8','#10F5A0','#FFB800','#C084FC','#F472B6','#FB923C'];
+const avClr=n=>{let h=0;for(const c of(n||'?'))h=(h*31+c.charCodeAt(0))%AVC.length;return AVC[h];};
+const initials=n=>(n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
 
-// ═══════════════════════════════════════════
-// SUPABASE
-// ═══════════════════════════════════════════
-async function sb(path,o={}){
-  setSy(true);
-  try{
-    const r=await fetch(SB+'/rest/v1/'+path,{
-      headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':o.prefer||'return=representation'},
-      method:o.method||'GET',body:o.body?JSON.stringify(o.body):undefined
-    });
-    setOn(true);
-    if(r.status===400||r.status===404){const b=await r.text();if(b.includes('does not exist')||b.includes('relation')||b.includes('column')){document.getElementById('dbErr').style.display='block';return null;}}
-    const t=await r.text();return t?JSON.parse(t):[];
-  }catch{setOn(false);return null;}
-  finally{setSy(false);}
-}
-const enc=s=>encodeURIComponent(s);
-const q={
-  upsertP:(name,do_steps,do_budget,budget)=>sb('participants',{method:'POST',prefer:'resolution=merge-duplicates,return=representation',body:{name,do_steps,do_budget,budget:budget||null}}),
-  allP:()=>sb('participants?select=*&order=name.asc').then(r=>r||[]),
-  getP:n=>sb(`participants?name=eq.${enc(n)}&select=*`).then(r=>r&&r[0]),
-  patchP:(n,d)=>sb(`participants?name=eq.${enc(n)}`,{method:'PATCH',prefer:'return=representation',body:d}),
-  getSpin:(n,d)=>sb(`spins?name=eq.${enc(n)}&date=eq.${d}&select=*`).then(r=>r&&r[0]),
-  upsertSpin:(n,d,g)=>sb('spins',{method:'POST',prefer:'resolution=merge-duplicates,return=representation',body:{name:n,date:d,goal:g}}),
-  monthSpins:(n,m)=>sb(`spins?name=eq.${enc(n)}&date=gte.${m}-01&date=lte.${m}-31&select=*&order=date.asc`).then(r=>r||[]),
-  allSpinsAll:(m)=>sb(`spins?date=gte.${m}-01&date=lte.${m}-31&select=*`).then(r=>r||[]),
-  allSpinsAllTime:()=>sb('spins?select=*').then(r=>r||[]),
-  getLog:(n,d)=>sb(`logs?name=eq.${enc(n)}&date=eq.${d}&select=*`).then(r=>r&&r[0]),
-  upsertLog:(n,d,s)=>sb('logs',{method:'POST',prefer:'resolution=merge-duplicates,return=representation',body:{name:n,date:d,steps:s}}),
-  monthLogs:(n,m)=>sb(`logs?name=eq.${enc(n)}&date=gte.${m}-01&date=lte.${m}-31&select=*`).then(r=>r||[]),
-  allLogsAll:(m)=>sb(`logs?date=gte.${m}-01&date=lte.${m}-31&select=*`).then(r=>r||[]),
-  allLogsAllTime:()=>sb('logs?select=*').then(r=>r||[]),
-  getBM:(n,m)=>sb(`budget_months?name=eq.${enc(n)}&month=eq.${enc(m)}&select=*`).then(r=>r&&r[0]),
-  upsertBM:(n,m,tot,days,env)=>sb('budget_months',{method:'POST',prefer:'resolution=merge-duplicates,return=representation',body:{name:n,month:m,total:tot,days,envelopes:JSON.stringify(env)}}),
-  deleteBM:(n,m)=>sb(`budget_months?name=eq.${enc(n)}&month=eq.${enc(m)}`,{method:'DELETE',prefer:''}),
-  getBS:(n,d)=>sb(`budget_spins?name=eq.${enc(n)}&date=eq.${d}&select=*`).then(r=>r&&r[0]),
-  upsertBS:(n,m,d,a)=>sb('budget_spins',{method:'POST',prefer:'resolution=merge-duplicates,return=representation',body:{name:n,month:m,date:d,allowance:a}}),
-  monthBS:(n,m)=>sb(`budget_spins?name=eq.${enc(n)}&month=eq.${enc(m)}&select=*&order=date.asc`).then(r=>r||[]),
-  allBSAll:(m)=>sb(`budget_spins?month=eq.${enc(m)}&select=*`).then(r=>r||[]),
-  allBSAllTime:()=>sb('budget_spins?select=*').then(r=>r||[]),
-  getBL:(n,d)=>sb(`budget_logs?name=eq.${enc(n)}&date=eq.${d}&select=*`).then(r=>r&&r[0]),
-  upsertBL:(n,d,s)=>sb('budget_logs',{method:'POST',prefer:'resolution=merge-duplicates,return=representation',body:{name:n,date:d,spent:s}}),
-  monthBL:(n,m)=>sb(`budget_logs?name=eq.${enc(n)}&date=gte.${m}-01&date=lte.${m}-31&select=*`).then(r=>r||[]),
-  allBLAll:(m)=>sb(`budget_logs?date=gte.${m}-01&date=lte.${m}-31&select=*`).then(r=>r||[]),
-  allBLAllTime:()=>sb('budget_logs?select=*').then(r=>r||[]),
-  upsertArchive:(n,m,ch,score,metric)=>sb('month_archives',{method:'POST',prefer:'resolution=merge-duplicates,return=representation',body:{name:n,month:m,challenge:ch,score,metric}}),
-  allArchive:()=>sb('month_archives?select=*').then(r=>r||[]),
-};
-
-function setOn(v){document.getElementById('conn').className='conn'+(v?' on':'');}
-function setSy(v){if(v)document.getElementById('conn').className='conn sy';}
+function setConn(s){document.getElementById('conn').className='conn'+(s==='on'?' on':s==='sy'?' sy':'');}
 function toast(msg,type){
   const t=document.getElementById('toast');
   t.textContent=msg;t.className='toast'+(type?' '+type:'');
@@ -596,16 +564,168 @@ function toast(msg,type){
 }
 
 // ═══════════════════════════════════════════
-// PAGES / NAV
+// AUTH
+// ═══════════════════════════════════════════
+function switchAuthTab(tab){
+  document.querySelectorAll('.auth-tab').forEach((b,i)=>{
+    b.classList.toggle('active',['login','signup','reset'][i]===tab);
+  });
+  document.querySelectorAll('.auth-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('auth'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+}
+
+function showAuthMsg(id,msg,type){
+  const el=document.getElementById(id);
+  el.textContent=msg;el.className='auth-msg '+type+' show';
+}
+function clearAuthMsg(id){document.getElementById(id).className='auth-msg';}
+
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  if(!email||!pass){showAuthMsg('loginMsg','Please fill in all fields.','err');return;}
+  clearAuthMsg('loginMsg');
+  const{error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){
+    if(error.message.includes('confirm')||error.message.includes('verified')){
+      showAuthMsg('loginMsg','Please check your email and click the confirmation link first, then try logging in again.','err');
+    }else{
+      showAuthMsg('loginMsg',error.message,'err');
+    }
+  }
+}
+
+function toggleSignupCh(type){
+  signupSel[type]=!signupSel[type];
+  document.getElementById('suOptS').className='ch-opt'+(signupSel.steps?' on-steps':'');
+  document.getElementById('suOptB').className='ch-opt'+(signupSel.budget?' on-budget':'');
+  document.getElementById('suChkS').style.display=signupSel.steps?'flex':'none';
+  document.getElementById('suChkB').style.display=signupSel.budget?'flex':'none';
+}
+
+let nameAvailable=false;
+async function checkNameAvail(){
+  const name=document.getElementById('signupName').value.trim();
+  const el=document.getElementById('nameCheck');
+  nameAvailable=false;
+  if(!name){el.className='name-check';return;}
+  clearTimeout(nameCheckTimer);
+  nameCheckTimer=setTimeout(async()=>{
+    const{data}=await sb.from('participants').select('display_name').eq('display_name',name).maybeSingle();
+    if(data){
+      el.textContent=`❌ "${name}" is already taken — try adding your last initial!`;
+      el.className='name-check err';
+      nameAvailable=false;
+    }else{
+      el.textContent=`✓ "${name}" is available!`;
+      el.className='name-check ok';
+      nameAvailable=true;
+    }
+  },500);
+}
+
+async function doSignup(){
+  const name=document.getElementById('signupName').value.trim();
+  const email=document.getElementById('signupEmail').value.trim();
+  const pass=document.getElementById('signupPass').value;
+  if(!name||!email||!pass){showAuthMsg('signupMsg','Please fill in all fields.','err');return;}
+  if(!nameAvailable){showAuthMsg('signupMsg','Please choose a unique display name.','err');return;}
+  if(!signupSel.steps&&!signupSel.budget){showAuthMsg('signupMsg','Please choose at least one challenge.','err');return;}
+  if(pass.length<6){showAuthMsg('signupMsg','Password must be at least 6 characters.','err');return;}
+  clearAuthMsg('signupMsg');
+
+  const{data,error}=await sb.auth.signUp({email,password:pass});
+  if(error){showAuthMsg('signupMsg',error.message,'err');return;}
+
+  // Create participant profile
+  if(data.user){
+    await sb.from('participants').insert({
+      id:data.user.id,
+      display_name:name,
+      do_steps:signupSel.steps,
+      do_budget:signupSel.budget,
+      budget:null
+    });
+  }
+
+  // Check if email confirmation required
+  if(data.session){
+    // Logged in immediately (confirmation off)
+    toast(`Welcome, ${name}! 🎉`,'ok');
+  }else{
+    // Needs email confirmation
+    showAuthMsg('signupMsg',`Account created! Check your email at ${email} and click the confirmation link, then come back and log in.`,'ok');
+    switchAuthTab('login');
+  }
+}
+
+async function doReset(){
+  const email=document.getElementById('resetEmail').value.trim();
+  if(!email){showAuthMsg('resetMsg','Enter your email address.','err');return;}
+  const{error}=await sb.auth.resetPasswordForEmail(email,{
+    redirectTo:window.location.href
+  });
+  if(error){showAuthMsg('resetMsg',error.message,'err');}
+  else{showAuthMsg('resetMsg','Reset link sent! Check your email inbox.','ok');}
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser=null;myProfile=null;
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('authScreen').style.display='flex';
+  document.getElementById('mobNav').style.display='none';
+}
+
+// ═══════════════════════════════════════════
+// SESSION LISTENER
+// ═══════════════════════════════════════════
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(session&&session.user){
+    currentUser=session.user;
+    await loadProfile();
+    document.getElementById('authScreen').style.display='none';
+    document.getElementById('appScreen').style.display='block';
+    if(window.innerWidth<=600)document.getElementById('mobNav').style.display='block';
+    updateNavUser();
+    refreshHome();
+    // Handle password reset redirect
+    if(event==='PASSWORD_RECOVERY'){
+      const newPass=prompt('Enter your new password:');
+      if(newPass){
+        const{error}=await sb.auth.updateUser({password:newPass});
+        if(!error)toast('Password updated successfully!','ok');
+      }
+    }
+  }else{
+    document.getElementById('appScreen').style.display='none';
+    document.getElementById('authScreen').style.display='flex';
+    document.getElementById('mobNav').style.display='none';
+  }
+});
+
+async function loadProfile(){
+  const{data}=await sb.from('participants').select('*').eq('id',currentUser.id).single();
+  myProfile=data;
+}
+
+function updateNavUser(){
+  if(!myProfile)return;
+  const pill=document.getElementById('userPill');
+  pill.innerHTML=`<div class="av" style="background:${avClr(myProfile.display_name)};color:#fff;">${initials(myProfile.display_name)}</div><span>${myProfile.display_name}</span>`;
+}
+
+// ═══════════════════════════════════════════
+// PAGES
 // ═══════════════════════════════════════════
 const PLIST=['home','steps','budget','leaderboard'];
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.np,.mn-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.np,.mnb').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   const i=PLIST.indexOf(id);
   document.querySelectorAll('.np')[i]?.classList.add('active');
-  document.querySelectorAll('.mn-btn')[i]?.classList.add('active');
+  document.querySelectorAll('.mnb')[i]?.classList.add('active');
   if(id==='home')refreshHome();
   if(id==='steps')refreshSteps();
   if(id==='budget')refreshBudget();
@@ -613,111 +733,59 @@ function showPage(id){
 }
 
 // ═══════════════════════════════════════════
-// JOIN
-// ═══════════════════════════════════════════
-function toggleChallenge(type){
-  joinSel[type]=!joinSel[type];
-  document.getElementById('optS').className='ch-opt'+(joinSel.steps?' on-steps':'');
-  document.getElementById('optB').className='ch-opt'+(joinSel.budget?' on-budget':'');
-  document.getElementById('chkS').style.display=joinSel.steps?'flex':'none';
-  document.getElementById('chkB').style.display=joinSel.budget?'flex':'none';
-}
-
-async function joinChallenge(){
-  const name=document.getElementById('joinName').value.trim();
-  if(!name){toast('Enter your name!','err');return;}
-  if(!joinSel.steps&&!joinSel.budget){toast('Pick at least one challenge!','err');return;}
-  const r=await q.upsertP(name,joinSel.steps,joinSel.budget,null);
-  if(r===null){toast('Could not connect — see setup instructions.','err');return;}
-  me={name,do_steps:joinSel.steps,do_budget:joinSel.budget,budget:null};
-  localStorage.setItem('sw30_me',JSON.stringify(me));
-  toast(`You're in, ${name}! 🎉`,'ok');
-  await refreshHome();
-  setTimeout(()=>showPage(joinSel.steps?'steps':'budget'),500);
-}
-
-async function switchToUser(name){
-  const p=await q.getP(name);
-  if(!p)return;
-  me={name:p.name,do_steps:p.do_steps,do_budget:p.do_budget,budget:p.budget};
-  localStorage.setItem('sw30_me',JSON.stringify(me));
-  toast(`Switched to ${name}!`,'ok');
-  await refreshHome();
-  setTimeout(()=>showPage(p.do_steps?'steps':'budget'),400);
-}
-
-async function loadExistingUsers(){
-  const parts=await q.allP();
-  const list=document.getElementById('existingList');
-  if(!parts.length){list.innerHTML=`<div style="font-size:12px;color:var(--muted);">No one yet — be the first! 🌟</div>`;return;}
-  list.innerHTML=parts.map(p=>`
-    <div class="eu-item" onclick="switchToUser('${p.name}')">
-      <div style="width:28px;height:28px;border-radius:50%;background:${avClr(p.name)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">${initials(p.name)}</div>
-      <div style="flex:1;">
-        <div style="font-size:13px;font-weight:600;">${p.name}</div>
-        <div style="font-size:11px;color:var(--muted);">${[p.do_steps?'👟 Steps':null,p.do_budget?'💰 Budget':null].filter(Boolean).join(' · ')}</div>
-      </div>
-      <div style="font-size:11px;color:var(--muted);">Switch →</div>
-    </div>`).join('');
-}
-
-// ═══════════════════════════════════════════
 // HOME
 // ═══════════════════════════════════════════
 async function refreshHome(){
-  document.getElementById('currentMonthBadge').textContent=`📅 ${monthLabel()}`;
-  updateNavPill();
-  const joined=document.getElementById('joinedPanel');
-  if(!me){joined.style.display='none';await loadExistingUsers();return;}
-  joined.style.display='block';
+  if(!myProfile)return;
+  document.getElementById('monthBadge').textContent=`📅 ${monthLabel()}`;
+  const m=monthKey();
 
   // Strip
   const tags=[
-    me.do_steps?`<span class="ptag ptag-fire">👟 Steps</span>`:'',
-    me.do_budget?`<span class="ptag ptag-purple">💰 Budget</span>`:''
+    myProfile.do_steps?`<span class="ptag ptag-f">👟 Steps</span>`:'',
+    myProfile.do_budget?`<span class="ptag ptag-p">💰 Budget</span>`:''
   ].join('');
   document.getElementById('homeStrip').innerHTML=`
     <div class="p-strip">
-      <div class="p-av" style="background:${avClr(me.name)};color:#fff;">${initials(me.name)}</div>
-      <div class="p-info">
-        <div class="p-name">${me.name}</div>
-        <div class="p-meta">${monthLabel()}</div>
-      </div>
-      <div class="p-tags">${tags}</div>
+      <div class="p-av" style="background:${avClr(myProfile.display_name)};color:#fff;">${initials(myProfile.display_name)}</div>
+      <div style="flex:1;"><div class="p-name">${myProfile.display_name}</div><div class="p-meta">${monthLabel()}</div></div>
+      <div class="ptags">${tags}</div>
     </div>`;
 
-  // Stats
   let statsHtml='';
-  const m=monthKey();
-  if(me.do_steps){
-    const[spins,logs]=await Promise.all([q.monthSpins(me.name,m),q.monthLogs(me.name,m)]);
-    const lm={};for(const l of logs)lm[l.date]=l.steps;
+  if(myProfile.do_steps){
+    const[{data:spins},{data:logs}]=await Promise.all([
+      sb.from('spins').select('*').eq('name',myProfile.display_name).gte('date',m+'-01').lte('date',m+'-31'),
+      sb.from('logs').select('*').eq('name',myProfile.display_name).gte('date',m+'-01').lte('date',m+'-31')
+    ]);
+    const lm={};for(const l of(logs||[]))lm[l.date]=l.steps;
     let tot=0,done=0,ld=0;
-    for(const s of spins){const st=lm[s.date];if(st!==undefined){ld++;tot+=st;if(st>=s.goal)done++;}}
+    for(const s of(spins||[])){const st=lm[s.date];if(st!==undefined){ld++;tot+=st;if(st>=s.goal)done++;}}
     const avg=ld?Math.round(tot/ld):0;
-    statsHtml+=`
-      <div style="font-size:11px;color:var(--fire);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:7px;">👟 Steps This Month</div>
-      <div class="sg sg-3" style="margin-bottom:16px;">
-        <div class="sbox"><div class="sn fire">${done}</div><div class="sl">Goals Hit</div></div>
+    statsHtml+=`<div style="font-size:11px;color:var(--fire);text-transform:uppercase;letter-spacing:0.4px;font-weight:600;margin-bottom:6px;">👟 Steps This Month</div>
+      <div class="sg sg3" style="margin-bottom:14px;">
+        <div class="sbox"><div class="sn f">${done}</div><div class="sl">Goals Hit</div></div>
         <div class="sbox"><div class="sn">${fmtK(avg)}</div><div class="sl">Daily Avg</div></div>
-        <div class="sbox"><div class="sn mint">${ld?Math.round(done/ld*100)+'%':'—'}</div><div class="sl">Hit Rate</div></div>
+        <div class="sbox"><div class="sn m">${ld?Math.round(done/ld*100)+'%':'—'}</div><div class="sl">Hit Rate</div></div>
       </div>`;
   }
-  if(me.do_budget){
-    const bm=await q.getBM(me.name,m);
+  if(myProfile.do_budget){
+    const{data:bm}=await sb.from('budget_months').select('*').eq('name',myProfile.display_name).eq('month',m).maybeSingle();
     if(bm){
-      const[bspins,blogs]=await Promise.all([q.monthBS(me.name,m),q.monthBL(me.name,m)]);
-      const sm={};for(const s of bspins)sm[s.date]=Number(s.allowance);
-      const lm2={};for(const l of blogs)if(sm[l.date]!==undefined)lm2[l.date]=Number(l.spent);
+      const[{data:bspins},{data:blogs}]=await Promise.all([
+        sb.from('budget_spins').select('*').eq('name',myProfile.display_name).eq('month',m),
+        sb.from('budget_logs').select('*').eq('name',myProfile.display_name).gte('date',m+'-01').lte('date',m+'-31')
+      ]);
+      const sm={};for(const s of(bspins||[]))sm[s.date]=Number(s.allowance);
+      const lm2={};for(const l of(blogs||[]))if(sm[l.date]!==undefined)lm2[l.date]=Number(l.spent);
       const spent=Object.values(lm2).reduce((a,v)=>a+v,0);
       const under=Object.keys(lm2).filter(d=>lm2[d]<=sm[d]).length;
       const ld2=Object.keys(lm2).length;
-      statsHtml+=`
-        <div style="font-size:11px;color:var(--purple);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:7px;">💰 Budget This Month</div>
-        <div class="sg sg-3" style="margin-bottom:16px;">
-          <div class="sbox"><div class="sn purple">${fmt$(bm.total)}</div><div class="sl">Budget</div></div>
-          <div class="sbox"><div class="sn fire">${fmt$(spent)}</div><div class="sl">Spent</div></div>
-          <div class="sbox"><div class="sn mint">${ld2?Math.round(under/ld2*100)+'%':'—'}</div><div class="sl">Under Rate</div></div>
+      statsHtml+=`<div style="font-size:11px;color:var(--purple);text-transform:uppercase;letter-spacing:0.4px;font-weight:600;margin-bottom:6px;">💰 Budget This Month</div>
+        <div class="sg sg3" style="margin-bottom:14px;">
+          <div class="sbox"><div class="sn p">${fmt$(bm.total)}</div><div class="sl">Budget</div></div>
+          <div class="sbox"><div class="sn f">${fmt$(spent)}</div><div class="sl">Spent</div></div>
+          <div class="sbox"><div class="sn m">${ld2?Math.round(under/ld2*100)+'%':'—'}</div><div class="sl">Under Rate</div></div>
         </div>`;
     }else{
       statsHtml+=`<div class="bnr bnr-pu" style="margin-bottom:12px;"><div class="bi">💰</div><div>Budget not set up for ${monthLabel()} yet. <strong style="cursor:pointer;text-decoration:underline;" onclick="showPage('budget')">Set it up →</strong></div></div>`;
@@ -725,22 +793,21 @@ async function refreshHome(){
   }
   document.getElementById('homeStats').innerHTML=statsHtml;
 
-  // Actions
   const acts=[];
-  if(me.do_steps)acts.push(`<button class="btn btn-fire btn-sm" onclick="showPage('steps')">👟 Step Wheel</button>`);
-  if(me.do_budget)acts.push(`<button class="btn btn-purple btn-sm" onclick="showPage('budget')">💰 Budget Wheel</button>`);
+  if(myProfile.do_steps)acts.push(`<button class="btn btn-fire btn-sm" onclick="showPage('steps')">👟 Step Wheel</button>`);
+  if(myProfile.do_budget)acts.push(`<button class="btn btn-purple btn-sm" onclick="showPage('budget')">💰 Budget Wheel</button>`);
   acts.push(`<button class="btn btn-outline btn-sm" onclick="showPage('leaderboard')">🏆 Leaderboard</button>`);
   document.getElementById('homeActions').innerHTML=acts.join('');
-  await loadExistingUsers();
-}
 
-function updateNavPill(){
-  const pill=document.getElementById('whoPill');
-  if(!me){pill.style.display='none';return;}
-  pill.style.display='flex';
-  const av=document.getElementById('navAv');
-  av.style.background=avClr(me.name);av.style.color='#fff';av.textContent=initials(me.name);
-  document.getElementById('navNm').textContent=me.name;
+  // Others this month
+  const{data:others}=await sb.from('participants').select('*').neq('id',currentUser.id).order('display_name');
+  const ol=document.getElementById('othersList');
+  if(!others||!others.length){ol.innerHTML=`<div style="font-size:12px;color:var(--muted);">No other challengers yet this month!</div>`;return;}
+  ol.innerHTML=others.map(p=>`
+    <div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="width:26px;height:26px;border-radius:50%;background:${avClr(p.display_name)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">${initials(p.display_name)}</div>
+      <div style="flex:1;"><div style="font-size:13px;font-weight:600;">${p.display_name}</div><div style="font-size:11px;color:var(--muted);">${[p.do_steps?'👟 Steps':null,p.do_budget?'💰 Budget':null].filter(Boolean).join(' · ')}</div></div>
+    </div>`).join('');
 }
 
 // ═══════════════════════════════════════════
@@ -759,14 +826,14 @@ function drawStep(angle){
     ctx.textAlign='right';ctx.fillStyle='rgba(0,0,0,0.8)';ctx.font='bold 11px Inter';
     ctx.fillText(SVALS[i]>=1000?(SVALS[i]/1000)+'k':SVALS[i],r-7,4);ctx.restore();
   }
-  ctx.beginPath();ctx.arc(cx,cy,22,0,Math.PI*2);ctx.fillStyle='#08080A';ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,20,0,Math.PI*2);ctx.fillStyle='#08080A';ctx.fill();
   ctx.fillStyle='#fff';ctx.font='bold 8px Inter';ctx.textAlign='center';ctx.fillText('SPIN',cx,cy+3);
 }
 
 async function doStepSpin(){
-  if(stepSpin||!me)return;
-  const key=today();
-  const ex=await q.getSpin(me.name,key);
+  if(stepSpin||!myProfile)return;
+  const key=todayKey();
+  const{data:ex}=await sb.from('spins').select('*').eq('name',myProfile.display_name).eq('date',key).maybeSingle();
   if(ex){toast('Already spun today!','err');showStepRev(ex.goal);return;}
   stepSpin=true;document.getElementById('stepSpinBtn').disabled=true;
   document.getElementById('stepReveal').style.display='none';
@@ -775,17 +842,17 @@ async function doStepSpin(){
   const tA=(5+Math.random()*5)*Math.PI*2+(SVALS.length-ti)*arc-arc/2-Math.PI/2;
   const dur=4000+Math.random()*1200,t0=performance.now(),sa=stepAngle;
   const ease=t=>1-Math.pow(1-t,4);
-  function frame(now){
+  (function frame(now){
     const p=Math.min((now-t0)/dur,1);
     stepAngle=sa+tA*ease(p);drawStep(stepAngle);
     if(p<1){requestAnimationFrame(frame);return;}
     stepSpin=false;document.getElementById('stepSpinBtn').disabled=false;
     const goal=SVALS[ti];
-    q.upsertSpin(me.name,key,goal).then(()=>refreshAll());
+    setConn('sy');
+    sb.from('spins').upsert({name:myProfile.display_name,date:key,goal},{onConflict:'name,date'}).then(()=>{setConn('on');refreshAll();});
     showStepRev(goal);
     toast(`Today: ${goal.toLocaleString()} steps! 🎯`,'ok');
-  }
-  requestAnimationFrame(frame);
+  })(performance.now());
 }
 
 function showStepRev(goal){
@@ -795,43 +862,47 @@ function showStepRev(goal){
 }
 
 async function refreshSteps(){
-  const ok=me&&me.do_steps;
+  if(!myProfile){drawStep(stepAngle);return;}
+  const ok=myProfile.do_steps;
   document.getElementById('noSteps').style.display=ok?'none':'block';
   document.getElementById('stepsContent').style.display=ok?'block':'none';
   drawStep(stepAngle);
   if(!ok)return;
   const m=monthKey();
-  document.getElementById('stepCalTitle').textContent=monthLabel();
+  document.getElementById('stepCalLbl').textContent=monthLabel();
   document.getElementById('stepsStrip').innerHTML=`
     <div class="p-strip">
-      <div class="p-av" style="background:${avClr(me.name)};color:#fff;">${initials(me.name)}</div>
-      <div class="p-info"><div class="p-name">${me.name}</div><div class="p-meta">👟 Step Challenge · ${monthLabel()}</div></div>
+      <div class="p-av" style="background:${avClr(myProfile.display_name)};color:#fff;">${initials(myProfile.display_name)}</div>
+      <div><div class="p-name">${myProfile.display_name}</div><div class="p-meta">👟 Step Challenge · ${monthLabel()}</div></div>
     </div>`;
-  const[spins,logs]=await Promise.all([q.monthSpins(me.name,m),q.monthLogs(me.name,m)]);
+  setConn('sy');
+  const[{data:spins},{data:logs}]=await Promise.all([
+    sb.from('spins').select('*').eq('name',myProfile.display_name).gte('date',m+'-01').lte('date',m+'-31').order('date'),
+    sb.from('logs').select('*').eq('name',myProfile.display_name).gte('date',m+'-01').lte('date',m+'-31')
+  ]);
+  setConn('on');
   const sm={},lm={};
-  for(const s of spins)sm[s.date]=s.goal;
-  for(const l of logs)lm[l.date]=l.steps;
+  for(const s of(spins||[]))sm[s.date]=s.goal;
+  for(const l of(logs||[]))lm[l.date]=l.steps;
   let tot=0,done=0,ld=0;
   for(const d of Object.keys(sm)){const st=lm[d];if(st!==undefined){ld++;tot+=st;if(st>=sm[d])done++;}}
   const avg=ld?Math.round(tot/ld):0;
   document.getElementById('stepsStats').innerHTML=`
-    <div class="sbox"><div class="sn fire">${done}</div><div class="sl">Goals Hit</div></div>
+    <div class="sbox"><div class="sn f">${done}</div><div class="sl">Goals Hit</div></div>
     <div class="sbox"><div class="sn">${fmtK(avg)}</div><div class="sl">Daily Avg</div></div>
-    <div class="sbox"><div class="sn mint">${ld?Math.round(done/ld*100)+'%':'—'}</div><div class="sl">Hit Rate</div></div>`;
+    <div class="sbox"><div class="sn m">${ld?Math.round(done/ld*100)+'%':'—'}</div><div class="sl">Hit Rate</div></div>`;
 
-  const key=today();
+  const key=todayKey();
   const spin=sm[key]!==undefined?{goal:sm[key]}:null;
   const log=lm[key]!==undefined?{steps:lm[key]}:null;
-  const banner=document.getElementById('stepsBanner');
-  const btn=document.getElementById('stepSpinBtn');
-  const rev=document.getElementById('stepReveal');
   const ds=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const banner=document.getElementById('stepsBanner'),btn=document.getElementById('stepSpinBtn'),rev=document.getElementById('stepReveal');
   if(!spin){
-    banner.innerHTML=`<div class="bnr bnr-info"><div class="bi">🎡</div><div><strong>${ds}</strong><br>Spin the wheel to reveal your step goal!</div></div>`;
+    banner.innerHTML=`<div class="bnr bnr-info"><div class="bi">🎡</div><div><strong>${ds}</strong><br>Spin to reveal your step goal!</div></div>`;
     btn.style.display='inline-flex';rev.style.display='none';
   }else if(log){
     const met=log.steps>=spin.goal;
-    banner.innerHTML=`<div class="bnr ${met?'bnr-ok':'bnr-bad'}"><div class="bi">${met?'🏆':'💪'}</div><div><strong>${ds}</strong><br>Goal: ${spin.goal.toLocaleString()} · Logged: ${log.steps.toLocaleString()} · <strong style="color:${met?'var(--mint)':'var(--fire)'};">${met?'Crushed it!':'Not there yet!'}</strong></div></div>`;
+    banner.innerHTML=`<div class="bnr ${met?'bnr-ok':'bnr-bad'}"><div class="bi">${met?'🏆':'💪'}</div><div><strong>${ds}</strong><br>Goal: ${spin.goal.toLocaleString()} · Logged: ${log.steps.toLocaleString()} · <strong style="color:${met?'var(--mint)':'var(--fire)'};">${met?'Crushed it!':'Keep going!'}</strong></div></div>`;
     btn.style.display='none';rev.style.display='none';
   }else{
     banner.innerHTML=`<div class="bnr bnr-warn"><div class="bi">📋</div><div><strong>${ds}</strong><br>Goal: <strong>${spin.goal.toLocaleString()} steps</strong> — log before midnight!</div></div>`;
@@ -863,15 +934,14 @@ function drawBudget(angle,amounts){
     if(n<=20){
       ctx.save();ctx.translate(cx,cy);ctx.rotate(s+arc/2);
       ctx.textAlign='right';ctx.fillStyle='rgba(255,255,255,0.9)';
-      ctx.font=`bold ${Math.max(9,Math.min(12,160/n))}px Inter`;
+      ctx.font=`bold ${Math.max(9,Math.min(12,155/n))}px Inter`;
       ctx.fillText(fmt$(amounts[i]),r-6,4);ctx.restore();
     }
   }
-  ctx.beginPath();ctx.arc(cx,cy,22,0,Math.PI*2);ctx.fillStyle='#08080A';ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,20,0,Math.PI*2);ctx.fillStyle='#08080A';ctx.fill();
   ctx.fillStyle='#fff';ctx.font='bold 8px Inter';ctx.textAlign='center';ctx.fillText('SPIN',cx,cy+3);
 }
 
-// Generate envelopes from prorated budget
 function genEnvelopes(total,days){
   const cents=Math.round(total*100);
   const numT=Math.min(Math.max(3,Math.floor(days/5)),6);
@@ -879,7 +949,7 @@ function genEnvelopes(total,days){
   for(let t=0;t<numT;t++){
     const isLast=t===numT-1;
     const dc=isLast?rem:Math.max(1,Math.min(Math.floor(rem/(numT-t)*(0.5+Math.random())),rem-(numT-t-1)));
-    const ac=isLast?Math.round(remC/dc):Math.max(1,Math.round((remC/rem)*(0.5+Math.random()*1.0)));
+    const ac=isLast?Math.round(remC/dc):Math.max(1,Math.round((remC/rem)*(0.5+Math.random())));
     tiers.push({amount:Math.round(ac)/100,count:dc});
     rem-=dc;remC-=ac*dc;
     if(rem<=0)break;
@@ -891,7 +961,7 @@ function genEnvelopes(total,days){
 }
 
 function expandEnv(env){
-  let p=typeof env==='string'?JSON.parse(env):env;
+  const p=typeof env==='string'?JSON.parse(env):env;
   const f=[];for(const e of p)for(let i=0;i<e.count;i++)f.push(Number(e.amount));
   for(let i=f.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[f[i],f[j]]=[f[j],f[i]];}
   return f;
@@ -908,11 +978,8 @@ function previewEnv(){
   const total=parseFloat(document.getElementById('setupTotal').value);
   const days=parseInt(document.getElementById('setupDays').value);
   if(isNaN(total)||total<=0){toast('Enter a valid budget.','err');return;}
-  if(isNaN(days)||days<1){toast('Invalid days.','err');return;}
-  // Prorate if joining mid-month
-  const rem=daysRemainingInMonth();
+  const rem=daysRemaining();
   const prorated=rem<daysInMonth()?parseFloat((total*(rem/daysInMonth())).toFixed(2)):total;
-  document.getElementById('setupDays').value=rem;
   pendingEnv=genEnvelopes(prorated,rem);
   document.getElementById('envGrid').innerHTML=pendingEnv.map(e=>`
     <div class="env-box"><div class="env-amt">${fmt$(e.amount)}</div><div class="env-cnt">${e.count} day${e.count!==1?'s':''}</div></div>`).join('');
@@ -922,24 +989,23 @@ function previewEnv(){
 }
 
 async function saveBudgetSetup(){
-  if(!me||!pendingEnv)return;
+  if(!myProfile||!pendingEnv)return;
   const total=parseFloat(document.getElementById('setupTotal').value);
-  const days=parseInt(document.getElementById('setupDays').value);
+  const days=daysRemaining();
   const m=monthKey();
-  await q.patchP(me.name,{budget:total,do_budget:true});
-  me.budget=total;me.do_budget=true;
-  localStorage.setItem('sw30_me',JSON.stringify(me));
-  const r=await q.upsertBM(me.name,m,total,days,pendingEnv);
-  if(r===null){toast('Could not save — check DB tables.','err');return;}
+  await sb.from('participants').update({budget:total,do_budget:true}).eq('id',currentUser.id);
+  myProfile.budget=total;myProfile.do_budget=true;
+  const{error}=await sb.from('budget_months').upsert({name:myProfile.display_name,month:m,total,days,envelopes:JSON.stringify(pendingEnv)},{onConflict:'name,month'});
+  if(error){toast('Could not save — check DB.','err');return;}
   pendingEnv=null;
   toast('Budget saved! Start spinning 🎉','ok');
   refreshBudget();
 }
 
 async function doBudgetSpin(){
-  if(budgetSpin||!me||!activeBudget)return;
-  const key=today(),m=monthKey();
-  const ex=await q.getBS(me.name,key);
+  if(budgetSpin||!myProfile||!activeBudget)return;
+  const key=todayKey(),m=monthKey();
+  const{data:ex}=await sb.from('budget_spins').select('*').eq('name',myProfile.display_name).eq('date',key).maybeSingle();
   if(ex){toast('Already spun today!','err');await refreshBudgetUI();return;}
   const rem=activeBudget.remaining;
   if(!rem.length){toast('All days spun!','err');return;}
@@ -950,98 +1016,94 @@ async function doBudgetSpin(){
   const tA=(5+Math.random()*5)*Math.PI*2+(rem.length-ti)*arc-arc/2-Math.PI/2;
   const dur=4000+Math.random()*1200,t0=performance.now(),sa=budgetAngle;
   const ease=t=>1-Math.pow(1-t,4);
-  function frame(now){
+  (function frame(now){
     const p=Math.min((now-t0)/dur,1);
     budgetAngle=sa+tA*ease(p);drawBudget(budgetAngle,rem);
     if(p<1){requestAnimationFrame(frame);return;}
     budgetSpin=false;document.getElementById('budgetSpinBtn').disabled=false;
     const allow=rem[ti];
     activeBudget.remaining.splice(ti,1);
-    q.upsertBS(me.name,m,key,allow).then(()=>refreshAll());
+    setConn('sy');
+    sb.from('budget_spins').upsert({name:myProfile.display_name,month:m,date:key,allowance:allow},{onConflict:'name,date'}).then(()=>{setConn('on');refreshAll();});
     document.getElementById('budgetRevAmt').textContent=fmt$(allow);
     document.getElementById('budgetReveal').style.display='block';
     document.getElementById('budgetSpinBtn').style.display='none';
     toast(`Today's allowance: ${fmt$(allow)} 💜`,'ok');
-  }
-  requestAnimationFrame(frame);
+  })(performance.now());
 }
 
 async function refreshBudget(){
-  const ok=me&&me.do_budget;
+  if(!myProfile){drawBudget(budgetAngle,[]);return;}
+  const ok=myProfile.do_budget;
   document.getElementById('noBudget').style.display=ok?'none':'block';
   document.getElementById('budgetContent').style.display=ok?'block':'none';
   drawBudget(budgetAngle,[]);
   if(!ok)return;
   const m=monthKey();
-  document.getElementById('budgetCalTitle').textContent=monthLabel();
+  const rem=daysRemaining(),total=daysInMonth();
+  document.getElementById('budgetCalLbl').textContent=monthLabel();
   document.getElementById('budgetMonthLbl').textContent=monthLabel();
-  document.getElementById('setupMonthLbl2').textContent=monthLabel();
-
-  // Prorate note
-  const rem=daysRemainingInMonth(),total=daysInMonth();
+  document.getElementById('setupMonthLbl').textContent=monthLabel();
+  document.getElementById('setupDays').value=rem;
   const note=document.getElementById('prorateNote');
   if(rem<total){
-    const proratedAmt=me.budget?fmt$(Number(me.budget)*(rem/total)):'your budget';
-    note.textContent=`⚡ You're joining ${total-rem+1} days into ${monthLabel()} — budget prorated to ${rem} remaining days (${proratedAmt}).`;
-  }else{
-    note.textContent='';
-  }
-  document.getElementById('setupDays').value=rem;
+    const prorated=myProfile.budget?fmt$(Number(myProfile.budget)*(rem/total)):'your budget';
+    note.textContent=`⚡ Joining ${total-rem+1} days in — budget prorated to ${rem} remaining days (${prorated}).`;
+  }else{note.textContent='';}
 
   document.getElementById('budgetStrip').innerHTML=`
     <div class="p-strip">
-      <div class="p-av" style="background:${avClr(me.name)};color:#fff;">${initials(me.name)}</div>
-      <div class="p-info"><div class="p-name">${me.name}</div><div class="p-meta">💰 Food Budget · ${monthLabel()}</div></div>
+      <div class="p-av" style="background:${avClr(myProfile.display_name)};color:#fff;">${initials(myProfile.display_name)}</div>
+      <div><div class="p-name">${myProfile.display_name}</div><div class="p-meta">💰 Food Budget · ${monthLabel()}</div></div>
     </div>`;
 
-  const bm=await q.getBM(me.name,m);
+  setConn('sy');
+  const{data:bm}=await sb.from('budget_months').select('*').eq('name',myProfile.display_name).eq('month',m).maybeSingle();
+  setConn('on');
   if(!bm){
     document.getElementById('budgetSetup').style.display='block';
     document.getElementById('budgetActive').style.display='none';
-    if(me.budget)document.getElementById('setupTotal').value=me.budget;
+    if(myProfile.budget)document.getElementById('setupTotal').value=myProfile.budget;
     return;
   }
   document.getElementById('budgetSetup').style.display='none';
   document.getElementById('budgetActive').style.display='block';
 
-  const spins=await q.monthBS(me.name,m);
+  const{data:spins}=await sb.from('budget_spins').select('*').eq('name',myProfile.display_name).eq('month',m).order('date');
   const allAmt=expandEnv(bm.envelopes);
-  const spunAmts=spins.map(s=>Number(s.allowance));
-  const rem2=[...allAmt];
-  for(const a of spunAmts){const i=rem2.indexOf(a);if(i>-1)rem2.splice(i,1);}
-  activeBudget={total:bm.total,days:bm.days,envelopes:bm.envelopes,remaining:rem2};
+  const spunAmts=(spins||[]).map(s=>Number(s.allowance));
+  const remaining=[...allAmt];
+  for(const a of spunAmts){const i=remaining.indexOf(a);if(i>-1)remaining.splice(i,1);}
+  activeBudget={total:bm.total,days:bm.days,envelopes:bm.envelopes,remaining};
   await refreshBudgetUI(spins);
 }
 
 async function refreshBudgetUI(spins){
-  if(!me||!activeBudget)return;
+  if(!myProfile||!activeBudget)return;
   const m=monthKey();
-  const allSpins=spins||await q.monthBS(me.name,m);
+  const allSpins=spins||(await sb.from('budget_spins').select('*').eq('name',myProfile.display_name).eq('month',m).order('date')).data||[];
   const sm={};for(const s of allSpins)sm[s.date]=Number(s.allowance);
-  const logs=await q.monthBL(me.name,m);
-  const lm={};for(const l of logs)if(sm[l.date]!==undefined)lm[l.date]=Number(l.spent);
+  const{data:logs}=await sb.from('budget_logs').select('*').eq('name',myProfile.display_name).gte('date',m+'-01').lte('date',m+'-31');
+  const lm={};for(const l of(logs||[]))if(sm[l.date]!==undefined)lm[l.date]=Number(l.spent);
 
   let spent=0,under=0,ld=0;
   for(const d of Object.keys(sm)){const s=lm[d];if(s!==undefined){ld++;spent+=s;if(s<=sm[d])under++;}}
   const left=activeBudget.total-spent;
 
   document.getElementById('budgetStats').innerHTML=`
-    <div class="sbox"><div class="sn purple">${fmt$(activeBudget.total)}</div><div class="sl">Budget</div></div>
-    <div class="sbox"><div class="sn fire">${fmt$(spent)}</div><div class="sl">Spent</div></div>
-    <div class="sbox"><div class="sn" style="color:${left>=0?'var(--mint)':'var(--fire)'};">${fmt$(Math.abs(left))}</div><div class="sl">${left>=0?'Remaining':'Over!'}</div></div>
-    <div class="sbox"><div class="sn purple">${activeBudget.remaining.length}</div><div class="sl">Days Left</div></div>`;
+    <div class="sbox"><div class="sn p">${fmt$(activeBudget.total)}</div><div class="sl">Budget</div></div>
+    <div class="sbox"><div class="sn f">${fmt$(spent)}</div><div class="sl">Spent</div></div>
+    <div class="sbox"><div class="sn" style="color:${left>=0?'var(--mint)':'var(--fire)'};">${fmt$(Math.abs(left))}</div><div class="sl">${left>=0?'Left':'Over!'}</div></div>
+    <div class="sbox"><div class="sn p">${activeBudget.remaining.length}</div><div class="sl">Days Left</div></div>`;
 
   drawBudget(budgetAngle,activeBudget.remaining);
 
-  const key=today();
-  const tS=sm[key],tL=lm[key];
+  const key=todayKey(),tS=sm[key],tL=lm[key];
   const ds=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  const banner=document.getElementById('budgetBanner');
-  const btn=document.getElementById('budgetSpinBtn');
-  const rev=document.getElementById('budgetReveal');
+  const banner=document.getElementById('budgetBanner'),btn=document.getElementById('budgetSpinBtn'),rev=document.getElementById('budgetReveal');
   if(!tS){
     if(!activeBudget.remaining.length){
-      banner.innerHTML=`<div class="bnr bnr-pu"><div class="bi">🎊</div><div><strong>All envelopes opened!</strong> You've spun every day's budget this month.</div></div>`;
+      banner.innerHTML=`<div class="bnr bnr-pu"><div class="bi">🎊</div><div><strong>All envelopes opened!</strong> Every day's budget has been spun this month.</div></div>`;
       btn.style.display='none';rev.style.display='none';
     }else{
       banner.innerHTML=`<div class="bnr bnr-pu"><div class="bi">💰</div><div><strong>${ds}</strong><br>Spin to reveal today's food allowance!</div></div>`;
@@ -1052,7 +1114,7 @@ async function refreshBudgetUI(spins){
     banner.innerHTML=`<div class="bnr ${u?'bnr-ok':'bnr-bad'}"><div class="bi">${u?'✅':'⚠️'}</div><div><strong>${ds}</strong><br>Allowance ${fmt$(tS)} · Spent ${fmt$(tL)} · <strong style="color:${u?'var(--mint)':'var(--fire)'};">${u?'Under budget!':'Over budget'}</strong></div></div>`;
     btn.style.display='none';rev.style.display='none';
   }else{
-    banner.innerHTML=`<div class="bnr bnr-pu"><div class="bi">📋</div><div><strong>${ds}</strong><br>Allowance: <strong>${fmt$(tS)}</strong> — don't forget to log!</div></div>`;
+    banner.innerHTML=`<div class="bnr bnr-pu"><div class="bi">📋</div><div><strong>${ds}</strong><br>Allowance: <strong>${fmt$(tS)}</strong> — log your spending!</div></div>`;
     btn.style.display='none';
     document.getElementById('budgetRevAmt').textContent=fmt$(tS);
     rev.style.display='block';
@@ -1061,33 +1123,26 @@ async function refreshBudgetUI(spins){
 }
 
 async function resetBudget(){
-  if(!me||!confirm(`Reset ${monthLabel()} budget? Spin history will be cleared.`))return;
-  await q.deleteBM(me.name,monthKey());
-  activeBudget=null;
-  toast('Budget reset.','ok');
-  refreshBudget();
+  if(!myProfile||!confirm(`Reset ${monthLabel()} budget?`))return;
+  await sb.from('budget_months').delete().eq('name',myProfile.display_name).eq('month',monthKey());
+  activeBudget=null;toast('Budget reset.','ok');refreshBudget();
 }
 
 // ═══════════════════════════════════════════
-// CALENDAR (shared for steps + budget)
+// CALENDAR
 // ═══════════════════════════════════════════
 function buildCal(gridId,spinMap,logMap,type){
   const grid=document.getElementById(gridId);grid.innerHTML='';
-  const now=new Date();
-  const year=now.getFullYear(),month=now.getMonth();
-  const firstDay=new Date(year,month,1).getDay(); // 0=Sun
+  const now=new Date(),year=now.getFullYear(),month=now.getMonth();
+  const firstDay=new Date(year,month,1).getDay();
   const totalDays=new Date(year,month+1,0).getDate();
-  const key=today();
-
-  // Leading empty cells
+  const key=todayKey();
   for(let i=0;i<firstDay;i++){
-    const el=document.createElement('div');el.className='cc outmon';el.innerHTML='<div class="cn"> </div>';
-    grid.appendChild(el);
+    const el=document.createElement('div');el.className='cc out';el.innerHTML='<div class="cn"> </div>';grid.appendChild(el);
   }
   for(let d=1;d<=totalDays;d++){
     const dt=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday=dt===key;
-    const isFuture=dt>key;
+    const isToday=dt===key,isFuture=dt>key;
     const goal=spinMap[dt],logged=logMap[dt];
     let cls='cc';
     if(isToday)cls+=' tod';
@@ -1115,99 +1170,98 @@ function setLb(ch,time){
   document.querySelectorAll('.lbt').forEach(b=>b.className='lbt');
   const map={steps_month:'lbtSM',budget_month:'lbtBM',steps_alltime:'lbtSA',budget_alltime:'lbtBA'};
   const cls={steps_month:'as',budget_month:'ab',steps_alltime:'at',budget_alltime:'at'};
-  const key2=ch+'_'+time;
-  document.getElementById(map[key2]).classList.add(cls[key2]);
+  document.getElementById(map[ch+'_'+time]).classList.add(cls[ch+'_'+time]);
   refreshLeaderboard();
 }
 
 async function refreshLeaderboard(){
-  const lb=document.getElementById('lbContent');
-  const note=document.getElementById('lbNote');
+  const lb=document.getElementById('lbContent'),note=document.getElementById('lbNote');
   lb.innerHTML=`<div class="empty"><div class="ei">⏳</div><p>Loading…</p></div>`;
-  document.getElementById('lbMonthLabel').textContent=monthLabel();
+  document.getElementById('lbMonthLbl').textContent=monthLabel();
   const m=monthKey();
-  const parts=await q.allP();
+  const{data:parts}=await sb.from('participants').select('*').order('display_name');
   const rc=['r1','r2','r3'];
 
   if(lbTime==='month'){
     if(lbChallenge==='steps'){
-      note.textContent='Ranked by daily average steps (total ÷ days logged). Levels the playing field for mid-month joiners.';
-      const[spins,logs]=await Promise.all([q.allSpinsAll(m),q.allLogsAll(m)]);
-      const sParts=parts.filter(p=>p.do_steps);
+      note.textContent='Ranked by daily average steps — levels the playing field for mid-month joiners.';
+      const[{data:spins},{data:logs}]=await Promise.all([
+        sb.from('spins').select('*').gte('date',m+'-01').lte('date',m+'-31'),
+        sb.from('logs').select('*').gte('date',m+'-01').lte('date',m+'-31')
+      ]);
+      const sParts=(parts||[]).filter(p=>p.do_steps);
       if(!sParts.length){lb.innerHTML=`<div class="empty"><div class="ei">👟</div><p>No step challengers yet!</p></div>`;return;}
       const ranked=sParts.map(p=>{
-        const ps=spins.filter(s=>s.name===p.name);
-        const lm={};for(const l of logs)if(l.name===p.name)lm[l.date]=l.steps;
+        const ps=(spins||[]).filter(s=>s.name===p.display_name);
+        const lm={};for(const l of(logs||[]))if(l.name===p.display_name)lm[l.date]=l.steps;
         let tot=0,done=0,ld=0;
         for(const s of ps){const st=lm[s.date];if(st!==undefined){ld++;tot+=st;if(st>=s.goal)done++;}}
-        const avg=ld?Math.round(tot/ld):0;
-        const pct=ld?Math.round(done/ld*100):0;
-        return{name:p.name,avg,tot,done,ld,pct};
+        const avg=ld?Math.round(tot/ld):0,pct=ld?Math.round(done/ld*100):0;
+        return{name:p.display_name,avg,done,ld,pct};
       }).sort((a,b)=>b.avg-a.avg);
       lb.innerHTML=ranked.map((u,i)=>lbRow(u,i,rc,'fire-score',fmtK(u.avg)+' avg',`${u.done}/${u.ld} days`,u.pct)).join('');
     }else{
-      note.textContent='Ranked by % of days under budget. Best discipline wins — not who spends least.';
-      const[bspins,blogs]=await Promise.all([q.allBSAll(m),q.allBLAll(m)]);
-      const bParts=parts.filter(p=>p.do_budget);
+      note.textContent='Ranked by % of days under budget. Best discipline wins!';
+      const[{data:bspins},{data:blogs}]=await Promise.all([
+        sb.from('budget_spins').select('*').gte('date',m+'-01').lte('date',m+'-31'),
+        sb.from('budget_logs').select('*').gte('date',m+'-01').lte('date',m+'-31')
+      ]);
+      const bParts=(parts||[]).filter(p=>p.do_budget);
       if(!bParts.length){lb.innerHTML=`<div class="empty"><div class="ei">💰</div><p>No budget challengers yet!</p></div>`;return;}
       const ranked=bParts.map(p=>{
-        const ps=bspins.filter(s=>s.name===p.name);
-        const lm={};for(const l of blogs)if(l.name===p.name)lm[l.date]=Number(l.spent);
+        const ps=(bspins||[]).filter(s=>s.name===p.display_name);
         const sm={};for(const s of ps)sm[s.date]=Number(s.allowance);
+        const lm={};for(const l of(blogs||[]))if(l.name===p.display_name&&sm[l.date]!==undefined)lm[l.date]=Number(l.spent);
         let under=0,ld=0,saved=0;
         for(const d of Object.keys(sm)){const s=lm[d];if(s!==undefined){ld++;if(s<=sm[d]){under++;saved+=sm[d]-s;}}}
         const pct=ld?Math.round(under/ld*100):0;
-        return{name:p.name,pct,under,ld,saved};
+        return{name:p.display_name,pct,under,ld,saved};
       }).sort((a,b)=>b.pct-a.pct||b.saved-a.saved);
       lb.innerHTML=ranked.map((u,i)=>lbRow(u,i,rc,'budget-score',u.pct+'% under',`${u.under}/${u.ld} days`,u.pct)).join('');
     }
   }else{
-    // All-time
-    const archive=await q.allArchive();
-    const ch=lbChallenge;
-    note.textContent=ch==='steps'?'All-time average daily steps across all months played.':'All-time % of days under budget across all months played.';
-    const relevant=archive.filter(a=>a.challenge===ch);
+    const{data:archive}=await sb.from('month_archives').select('*');
+    const relevant=(archive||[]).filter(a=>a.challenge===lbChallenge);
+    note.textContent=lbChallenge==='steps'?'All-time average daily steps across all months played.':'All-time % of days under budget across all months played.';
     if(!relevant.length){lb.innerHTML=`<div class="empty"><div class="ei">📈</div><p>No all-time data yet — finish a month first!</p></div>`;return;}
-    // Group by name, average their scores
     const byName={};
-    for(const a of relevant){
-      if(!byName[a.name])byName[a.name]={scores:[],metric:a.metric};
-      byName[a.name].scores.push(Number(a.score));
-    }
-    const ranked=Object.entries(byName).map(([name,d])=>{
-      const avg=d.scores.reduce((s,v)=>s+v,0)/d.scores.length;
-      return{name,avg:Math.round(avg*10)/10,months:d.scores.length,metric:d.metric};
+    for(const a of relevant){if(!byName[a.name])byName[a.name]=[];byName[a.name].push(Number(a.score));}
+    const ranked=Object.entries(byName).map(([name,scores])=>{
+      const avg=scores.reduce((s,v)=>s+v,0)/scores.length;
+      return{name,avg:Math.round(avg*10)/10,months:scores.length};
     }).sort((a,b)=>b.avg-a.avg);
-    const isSteps=ch==='steps';
-    lb.innerHTML=ranked.map((u,i)=>lbRow(u,i,rc,isSteps?'fire-score':'budget-score',isSteps?fmtK(u.avg)+' avg':u.avg+'% avg',`${u.months} month${u.months!==1?'s':''}`,Math.min(u.avg,100))).join('');
+    lb.innerHTML=ranked.map((u,i)=>lbRow(u,i,rc,lbChallenge==='steps'?'fire-score':'budget-score',lbChallenge==='steps'?fmtK(u.avg)+' avg':u.avg+'% avg',`${u.months} month${u.months!==1?'s':''}`,Math.min(u.avg,100))).join('');
   }
 }
 
 function lbRow(u,i,rc,scoreClass,score,meta,pct){
   const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
-  const isMe=me&&me.name===u.name;
+  const isMe=myProfile&&myProfile.display_name===u.name;
   const barColor=pct>=80?'var(--mint)':pct>=50?'var(--gold)':'var(--fire)';
   return`<div class="lb-row">
     <div class="lbr ${rc[i]||''}">${medal}</div>
     <div>
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">
-        <div style="width:26px;height:26px;border-radius:50%;background:${avClr(u.name)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">${initials(u.name)}</div>
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">
+        <div style="width:24px;height:24px;border-radius:50%;background:${avClr(u.name)};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${initials(u.name)}</div>
         <span style="font-weight:600;font-size:13px;">${u.name}</span>
         ${isMe?'<span style="background:rgba(255,77,28,0.12);border:1px solid rgba(255,77,28,0.3);border-radius:20px;padding:2px 7px;font-size:10px;color:var(--fire);">you</span>':''}
       </div>
       <div class="pbar"><div class="pfill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>
     </div>
-    <div class="lbs ${scoreClass}" style="font-size:12px;">${score}</div>
+    <div class="lbs" style="color:${scoreClass==='fire-score'?'var(--sky)':'var(--purple)'};">${score}</div>
     <div class="lbm">${meta}</div>
   </div>`;
 }
 
 // ═══════════════════════════════════════════
-// MODALS
+// LOG MODALS
 // ═══════════════════════════════════════════
 async function openStepLog(key){
-  if(!me)return;stepLogDay=key;
-  const[spin,log]=await Promise.all([q.getSpin(me.name,key),q.getLog(me.name,key)]);
+  if(!myProfile)return;stepLogDay=key;
+  const[{data:spin},{data:log}]=await Promise.all([
+    sb.from('spins').select('*').eq('name',myProfile.display_name).eq('date',key).maybeSingle(),
+    sb.from('logs').select('*').eq('name',myProfile.display_name).eq('date',key).maybeSingle()
+  ]);
   if(!spin){toast('Spin the wheel first!','err');return;}
   document.getElementById('stepModalSub').textContent=`${dayStr(key)} · Goal: ${spin.goal.toLocaleString()} steps`;
   document.getElementById('stepInput').value=log?log.steps:'';
@@ -1216,22 +1270,26 @@ async function openStepLog(key){
 }
 function closeStepModal(){document.getElementById('stepModal').classList.remove('open');stepLogDay=null;}
 async function saveStepLog(){
-  if(!me||!stepLogDay)return;
+  if(!myProfile||!stepLogDay)return;
   const val=parseInt(document.getElementById('stepInput').value);
   if(isNaN(val)||val<0){toast('Enter valid steps!','err');return;}
-  const r=await q.upsertLog(me.name,stepLogDay,val);
-  if(r===null){toast('Could not save.','err');return;}
-  const spin=await q.getSpin(me.name,stepLogDay);
+  setConn('sy');
+  const{error}=await sb.from('logs').upsert({name:myProfile.display_name,date:stepLogDay,steps:val},{onConflict:'name,date'});
+  setConn('on');
+  if(error){toast('Could not save.','err');return;}
+  const{data:spin}=await sb.from('spins').select('*').eq('name',myProfile.display_name).eq('date',stepLogDay).maybeSingle();
   const met=spin&&val>=spin.goal;
-  // Archive if end of month data
   archiveIfNeeded();
   toast(met?`🏆 ${val.toLocaleString()} steps — goal crushed!`:`Logged ${val.toLocaleString()} steps!`,met?'ok':'');
   closeStepModal();refreshAll();
 }
 
 async function openBudgetLog(key){
-  if(!me)return;budgetLogDay=key;
-  const[spin,log]=await Promise.all([q.getBS(me.name,key),q.getBL(me.name,key)]);
+  if(!myProfile)return;budgetLogDay=key;
+  const[{data:spin},{data:log}]=await Promise.all([
+    sb.from('budget_spins').select('*').eq('name',myProfile.display_name).eq('date',key).maybeSingle(),
+    sb.from('budget_logs').select('*').eq('name',myProfile.display_name).eq('date',key).maybeSingle()
+  ]);
   if(!spin){toast('Spin the budget wheel first!','err');return;}
   budgetLogAllow=Number(spin.allowance);
   document.getElementById('budgetModalSub').textContent=`${dayStr(key)} · Allowance: ${fmt$(spin.allowance)}`;
@@ -1241,11 +1299,13 @@ async function openBudgetLog(key){
 }
 function closeBudgetModal(){document.getElementById('budgetModal').classList.remove('open');budgetLogDay=null;budgetLogAllow=null;}
 async function saveBudgetLog(){
-  if(!me||!budgetLogDay)return;
+  if(!myProfile||!budgetLogDay)return;
   const val=parseFloat(document.getElementById('spentInput').value);
   if(isNaN(val)||val<0){toast('Enter a valid amount!','err');return;}
-  const r=await q.upsertBL(me.name,budgetLogDay,val);
-  if(r===null){toast('Could not save.','err');return;}
+  setConn('sy');
+  const{error}=await sb.from('budget_logs').upsert({name:myProfile.display_name,date:budgetLogDay,spent:val},{onConflict:'name,date'});
+  setConn('on');
+  if(error){toast('Could not save.','err');return;}
   const u=budgetLogAllow&&val<=budgetLogAllow;
   archiveIfNeeded();
   toast(u?`✅ ${fmt$(val)} — under budget!`:`Logged ${fmt$(val)} spent.`,u?'ok':'');
@@ -1253,32 +1313,32 @@ async function saveBudgetLog(){
 }
 
 // ═══════════════════════════════════════════
-// ARCHIVE (save month stats to all-time)
+// ARCHIVE
 // ═══════════════════════════════════════════
 async function archiveIfNeeded(){
-  if(!me)return;
-  const m=monthKey();
-  // Archive steps
-  if(me.do_steps){
-    const[spins,logs]=await Promise.all([q.monthSpins(me.name,m),q.monthLogs(me.name,m)]);
-    const lm={};for(const l of logs)lm[l.date]=l.steps;
+  if(!myProfile)return;
+  const m=monthKey(),n=myProfile.display_name;
+  if(myProfile.do_steps){
+    const[{data:sp},{data:lg}]=await Promise.all([
+      sb.from('spins').select('*').eq('name',n).gte('date',m+'-01').lte('date',m+'-31'),
+      sb.from('logs').select('*').eq('name',n).gte('date',m+'-01').lte('date',m+'-31')
+    ]);
+    const lm={};for(const l of(lg||[]))lm[l.date]=l.steps;
     let tot=0,ld=0;
-    for(const s of spins){const st=lm[s.date];if(st!==undefined){ld++;tot+=st;}}
-    if(ld>0){
-      const avg=Math.round(tot/ld);
-      q.upsertArchive(me.name,m,'steps',avg,'daily_avg_steps');
-    }
+    for(const s of(sp||[])){const st=lm[s.date];if(st!==undefined){ld++;tot+=st;}}
+    if(ld>0)sb.from('month_archives').upsert({name:n,month:m,challenge:'steps',score:Math.round(tot/ld),metric:'daily_avg_steps'},{onConflict:'name,month,challenge'});
   }
-  // Archive budget
-  if(me.do_budget){
-    const[bspins,blogs]=await Promise.all([q.monthBS(me.name,m),q.monthBL(me.name,m)]);
-    const sm={};for(const s of bspins)sm[s.date]=Number(s.allowance);
-    const lm2={};for(const l of blogs)if(sm[l.date]!==undefined)lm2[l.date]=Number(l.spent);
+  if(myProfile.do_budget){
+    const[{data:bs},{data:bl}]=await Promise.all([
+      sb.from('budget_spins').select('*').eq('name',n).eq('month',m),
+      sb.from('budget_logs').select('*').eq('name',n).gte('date',m+'-01').lte('date',m+'-31')
+    ]);
+    const sm={};for(const s of(bs||[]))sm[s.date]=Number(s.allowance);
+    const lm2={};for(const l of(bl||[]))if(sm[l.date]!==undefined)lm2[l.date]=Number(l.spent);
     const ld2=Object.keys(lm2).length;
     if(ld2>0){
       const under=Object.keys(lm2).filter(d=>lm2[d]<=sm[d]).length;
-      const pct=Math.round(under/ld2*100);
-      q.upsertArchive(me.name,m,'budget',pct,'pct_under_budget');
+      sb.from('month_archives').upsert({name:n,month:m,challenge:'budget',score:Math.round(under/ld2*100),metric:'pct_under_budget'},{onConflict:'name,month,challenge'});
     }
   }
 }
@@ -1288,7 +1348,7 @@ async function archiveIfNeeded(){
 // ═══════════════════════════════════════════
 async function refreshAll(){
   await refreshHome();
-  const active=document.querySelector('.page.active')?.id?.replace('page-','');
+  const active=document.querySelector('#appScreen .page.active')?.id?.replace('page-','');
   if(active==='steps')await refreshSteps();
   if(active==='budget')await refreshBudget();
   if(active==='leaderboard')await refreshLeaderboard();
@@ -1299,20 +1359,16 @@ async function refreshAll(){
 // ═══════════════════════════════════════════
 document.getElementById('stepInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveStepLog();});
 document.getElementById('spentInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudgetLog();});
-document.getElementById('joinName').addEventListener('keydown',e=>{if(e.key==='Enter')joinChallenge();});
+document.getElementById('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
-// Set initial toggle state
-document.getElementById('chkS').style.display='flex';
-document.getElementById('chkB').style.display='none';
-document.getElementById('optS').className='ch-opt on-steps';
-document.getElementById('optB').className='ch-opt';
-
+document.getElementById('suChkS').style.display='flex';
+document.getElementById('suChkB').style.display='none';
 drawStep(0);
 drawBudget(0,[]);
-refreshHome();
 </script>
 </body>
 </html>
