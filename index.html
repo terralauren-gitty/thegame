@@ -639,33 +639,41 @@ async function doSignup(){
   const email=document.getElementById('signupEmail').value.trim();
   const pass=document.getElementById('signupPass').value;
   if(!name||!email||!pass){showAuthMsg('signupMsg','Please fill in all fields.','err');return;}
-  if(!nameAvailable){showAuthMsg('signupMsg','Please choose a unique display name.','err');return;}
   if(!signupSel.steps&&!signupSel.budget){showAuthMsg('signupMsg','Please choose at least one challenge.','err');return;}
   if(pass.length<6){showAuthMsg('signupMsg','Password must be at least 6 characters.','err');return;}
+
+  // Check name uniqueness
+  const{data:nameCheck}=await sb.from('participants').select('display_name').eq('display_name',name).maybeSingle();
+  if(nameCheck){showAuthMsg('signupMsg',`"${name}" is already taken — try adding your last initial!`,'err');return;}
+
   clearAuthMsg('signupMsg');
+  const btn=document.querySelector('#authSignup .btn-fire');
+  btn.disabled=true;btn.textContent='Creating account…';
 
-  const{data,error}=await sb.auth.signUp({email,password:pass});
-  if(error){showAuthMsg('signupMsg',error.message,'err');return;}
+  try{
+    const{data,error}=await sb.auth.signUp({email,password:pass});
+    if(error){showAuthMsg('signupMsg',error.message,'err');return;}
 
-  // Create participant profile
-  if(data.user){
-    await sb.from('participants').insert({
-      id:data.user.id,
-      display_name:name,
-      do_steps:signupSel.steps,
-      do_budget:signupSel.budget,
-      budget:null
-    });
-  }
+    if(data.user){
+      await sb.from('participants').insert({
+        id:data.user.id,
+        display_name:name,
+        do_steps:signupSel.steps,
+        do_budget:signupSel.budget,
+        budget:null
+      });
+    }
 
-  // Check if email confirmation required
-  if(data.session){
-    // Logged in immediately (confirmation off)
-    toast(`Welcome, ${name}! 🎉`,'ok');
-  }else{
-    // Needs email confirmation
-    showAuthMsg('signupMsg',`Account created! Check your email at ${email} and click the confirmation link, then come back and log in.`,'ok');
-    switchAuthTab('login');
+    if(data.session){
+      toast(`Welcome, ${name}! 🎉`,'ok');
+    }else{
+      showAuthMsg('signupMsg',`Account created! ✅ Check your email at ${email} and click the confirmation link, then log in.`,'ok');
+      switchAuthTab('login');
+    }
+  }catch(e){
+    showAuthMsg('signupMsg','Something went wrong — please try again.','err');
+  }finally{
+    btn.disabled=false;btn.textContent='Create Account 🚀';
   }
 }
 
@@ -694,6 +702,14 @@ sb.auth.onAuthStateChange(async(event,session)=>{
   if(session&&session.user){
     currentUser=session.user;
     await loadProfile();
+    // If no profile yet (e.g. email not confirmed yet on first signup), show auth
+    if(!myProfile){
+      document.getElementById('authScreen').style.display='flex';
+      document.getElementById('appScreen').style.display='none';
+      showAuthMsg('loginMsg','Account confirmed! Please log in to continue.','ok');
+      switchAuthTab('login');
+      return;
+    }
     document.getElementById('authScreen').style.display='none';
     document.getElementById('appScreen').style.display='block';
     if(window.innerWidth<=600)document.getElementById('mobNav').style.display='block';
@@ -715,7 +731,7 @@ sb.auth.onAuthStateChange(async(event,session)=>{
 });
 
 async function loadProfile(){
-  const{data}=await sb.from('participants').select('*').eq('id',currentUser.id).single();
+  const{data}=await sb.from('participants').select('*').eq('id',currentUser.id).maybeSingle();
   myProfile=data;
 }
 
