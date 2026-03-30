@@ -585,13 +585,23 @@ async function doLogin(){
   const pass=document.getElementById('loginPass').value;
   if(!email||!pass){showAuthMsg('loginMsg','Please fill in all fields.','err');return;}
   clearAuthMsg('loginMsg');
-  const{error}=await sb.auth.signInWithPassword({email,password:pass});
-  if(error){
-    if(error.message.includes('confirm')||error.message.includes('verified')){
-      showAuthMsg('loginMsg','Please check your email and click the confirmation link first, then try logging in again.','err');
-    }else{
-      showAuthMsg('loginMsg',error.message,'err');
+  const btn=document.querySelector('#authLogin .btn-fire');
+  btn.disabled=true;btn.textContent='Logging in…';
+  try{
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error){
+      if(error.message.includes('confirm')||error.message.includes('verified')||error.message.includes('email')){
+        showAuthMsg('loginMsg','Email not confirmed. Ask Lauren to confirm your account in Supabase, or try the Reset Password tab.','err');
+      }else if(error.message.includes('Invalid')||error.message.includes('credentials')){
+        showAuthMsg('loginMsg','Incorrect email or password. Please try again.','err');
+      }else{
+        showAuthMsg('loginMsg',error.message,'err');
+      }
     }
+  }catch(e){
+    showAuthMsg('loginMsg','Connection error — check your internet and try again.','err');
+  }finally{
+    btn.disabled=false;btn.textContent='Log In →';
   }
 }
 
