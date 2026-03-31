@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Spin & Win — Monthly Challenge</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <style>
 :root{
   --fire:#FF4D1C;--gold:#FFB800;--sky:#38BDF8;--mint:#10F5A0;--purple:#C084FC;
@@ -645,7 +645,7 @@ async function doLogin(){
     }
     // Success handled by onAuthStateChange
   } catch(e){
-    showMsg('msgLogin','Connection error. Please check your internet and try again.','err');
+    showMsg('msgLogin','Login failed: ' + (e.message || 'unknown error. Please try again.'), 'err');
   } finally {
     btn.disabled=false; btn.textContent='Log In →';
   }
