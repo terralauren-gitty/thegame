@@ -769,13 +769,29 @@ db.auth.onAuthStateChange(async(event, session)=>{
   if(session && session.user){
     authUser = session.user;
 
-    // Load profile
-    const {data, error} = await db.from('participants').select('*').eq('id', authUser.id).maybeSingle();
+    // Show loading state
+    const loginBtn = document.getElementById('loginBtn');
+    if(loginBtn){ loginBtn.disabled=true; loginBtn.textContent='Loading your profile…'; }
+
+    // Load profile with timeout
+    let data, error;
+    try{
+      const timeout = new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000));
+      const query = db.from('participants').select('*').eq('id', authUser.id).maybeSingle();
+      const result = await Promise.race([query, timeout]);
+      data = result.data; error = result.error;
+    } catch(e){
+      if(loginBtn){ loginBtn.disabled=false; loginBtn.textContent='Log In →'; }
+      showMsg('msgLogin','Could not load your profile — please try logging in again.','err');
+      await db.auth.signOut();
+      return;
+    }
+
+    if(loginBtn){ loginBtn.disabled=false; loginBtn.textContent='Log In →'; }
 
     if(error || !data){
-      // Auth account exists but no profile row — ask them to log in again or re-signup
       await db.auth.signOut();
-      showMsg('msgLogin','Your account needs to be set up. Please sign up again.','err');
+      showMsg('msgLogin','Account not found. Please sign up first.','err');
       switchTab('signup');
       return;
     }
